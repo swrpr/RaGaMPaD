@@ -1,0 +1,5923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ragam pad</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a0b;--p:#111114;--b:#1a1a1e;--hi:#e94560;--gl:#e9456033;--acc:#c8a050}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:#706e6a;
+  min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+  padding:8px 8px 120px;user-select:none;-webkit-user-select:none;
+  overflow-x:hidden;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,#0002 2px,#0002 4px);
+}
+h1{font-size:22px;color:var(--hi);letter-spacing:2px;margin:4px 0 2px;
+  text-shadow:0 0 20px var(--gl),0 0 40px #e9456011}
+.logo-l{cursor:pointer;display:inline-block;transition:transform .1s,color .15s,text-shadow .15s;
+  position:relative}
+.logo-l:active{transform:scale(1.3)}
+.logo-s{font-size:10px;color:#555;letter-spacing:0;vertical-align:baseline;margin:0 -1px;
+  display:inline-block;pointer-events:none;user-select:none;font-weight:300;font-style:italic}
+.logo-l.pop{color:#fff;text-shadow:0 0 20px var(--hi),0 0 40px var(--hi);transform:scale(1.25);
+  transition:transform 0s,color 0s}
+#status{font-size:12px;color:#333;margin:2px 0 8px;min-height:14px;text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+#status .led{width:6px;height:6px;border-radius:50%;background:#222;flex-shrink:0;
+  transition:background .3s,box-shadow .3s}
+#status .led.on{background:var(--hi);box-shadow:0 0 8px var(--gl)}
+#status .led.rec{background:#e44;box-shadow:0 0 8px #e4433;animation:pulse 0.6s infinite}
+
+/* ===== RAGA BAR ===== */
+.raga-bar{width:100%;max-width:420px;display:flex;align-items:center;gap:8px;padding:4px 8px;
+  background:var(--p);border-radius:6px;margin-bottom:6px;border:1px solid var(--b)}
+.raga-bar select{background:#0a0a0b;color:#888;border:1px solid #222;padding:3px 6px;
+  border-radius:4px;font-size:12px;flex:1;max-width:160px}
+.raga-bar .aroha{font-size:10px;color:#444;flex:1;text-align:right}
+
+/* ===== OCTAVE BAR ===== */
+.oct-bar{display:flex;gap:4px;margin-bottom:6px}
+.oct-btn{padding:4px 14px;border:1px solid #222;background:var(--p);color:#444;border-radius:4px;
+  font-size:11px;cursor:pointer;transition:all .15s}
+.oct-btn.active{background:#222;color:var(--hi);border-color:var(--hi)}
+
+/* ===== PADS ===== */
+.pad-box{width:100%;max-width:420px;padding:8px;
+  background:var(--p);border:1px solid var(--b);border-radius:10px;margin-bottom:6px;
+  box-shadow:inset 0 1px 0 #ffffff05}
+.pad-box .sh{font-size:10px;color:#2a2a2a;margin-bottom:4px;letter-spacing:2px;text-transform:uppercase}
+.pads{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+#sndPadGrid{grid-template-columns:repeat(7,1fr)}
+.pad{
+  aspect-ratio:.85;border-radius:8px;position:relative;overflow:hidden;cursor:pointer;
+  background:linear-gradient(160deg,#1c1c20,#141416);
+  border:2px solid var(--c,#1e1e22);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 4px 0 #08080a,0 5px 8px #00000088,inset 0 1px 0 #ffffff0a;
+  transform:translateY(0);transition:transform .04s,box-shadow .04s,border-color .15s;
+  touch-action:none;
+}
+.pad:active,.pad.dn{transform:translateY(3px);
+  box-shadow:0 1px 0 #08080a,0 1px 3px #00000066,inset 0 1px 0 #ffffff06}
+.pad .gl{position:absolute;inset:0;border-radius:6px;
+  background:radial-gradient(circle,var(--c)44,transparent 70%);
+  opacity:0;pointer-events:none;transition:opacity .08s}
+.pad.fl .gl{opacity:1;transition:opacity 0s}
+.pad .nm{position:relative;z-index:1;font-size:11px;font-weight:700;color:#444;
+  transition:color .15s,text-shadow .15s}
+.pad .nm2{position:relative;z-index:1;font-size:7px;color:#2a2a2a;margin-top:1px;
+  transition:color .15s}
+.pad.active{border-color:var(--c);
+  box-shadow:0 4px 0 #08080a,0 5px 8px #00000088,inset 0 1px 0 #ffffff0a,0 0 25px var(--c)22}
+.pad.active .nm{color:var(--c);text-shadow:0 0 8px var(--c)44}
+.pad.active .nm2{color:var(--c);opacity:.6}
+.pad.fl{animation:padFlash .3s ease-out}
+.pad.disabled{opacity:0.12;pointer-events:none}
+@keyframes padFlash{0%{background:linear-gradient(160deg,color-mix(in srgb,var(--c) 30%,#1c1c20),#141416)}100%{background:linear-gradient(160deg,#1c1c20,#141416)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ===== VISUALIZER ===== */
+.viz-box{width:100%;max-width:420px;margin-bottom:6px}
+.viz-modes{display:flex;gap:3px;margin-bottom:3px;flex-wrap:wrap}
+.viz-modes .vm{font-size:9px;padding:2px 6px;border-radius:3px;
+  background:#0e0e10;border:1px solid #1a1a1e;color:#3a3a3a;
+  cursor:pointer;transition:all .1s;letter-spacing:1px}
+.viz-modes .vm:hover,.viz-modes .vm.on{border-color:var(--acc);color:var(--acc)}
+.viz{width:100%;height:120px;background:#0a0a0b;border-radius:6px;
+  border:1px solid var(--b);overflow:hidden}
+.viz canvas{width:100%;height:100%}
+
+/* ===== KNOBS ===== */
+.knob-bar{width:100%;max-width:420px;display:flex;justify-content:space-around;
+  background:var(--p);border:1px solid var(--b);border-radius:10px;padding:10px 6px;
+  margin-bottom:6px;box-shadow:inset 0 1px 0 #ffffff05}
+.knob-ctrl{display:flex;flex-direction:column;align-items:center;gap:2px}
+.knob-ctrl .kl{font-size:9px;color:#333;letter-spacing:1px;text-transform:uppercase}
+.knob-ctrl .kv{font-size:10px;color:#555;min-height:14px}
+.knob{width:44px;height:44px;border-radius:50%;background:conic-gradient(from 225deg,#222 0deg,#333 270deg,#222 270deg);
+  border:2px solid #1a1a1e;position:relative;cursor:pointer;touch-action:none}
+.knob-ind{position:absolute;width:2px;height:14px;background:var(--hi);left:50%;top:4px;
+  transform-origin:bottom center;border-radius:1px}
+.knob-track{position:absolute;inset:-3px;border-radius:50%;
+  border:2px solid transparent;border-top-color:#ffffff08;border-left-color:#ffffff04}
+
+/* ===== SEQUENCER ===== */
+.seq-box{width:100%;max-width:420px;margin-bottom:6px;
+  background:var(--p);border:1px solid var(--b);border-radius:10px;padding:8px;
+  box-shadow:inset 0 1px 0 #ffffff05}
+.sh{font-size:10px;color:#2a2a2a;margin-bottom:4px;letter-spacing:2px;text-transform:uppercase}
+.seq{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
+.st{aspect-ratio:1;border-radius:2px;background:#0e0e10;border:1px solid #151518;
+  cursor:pointer;transition:all .05s;min-height:11px}
+.st.on{background:var(--c,#555);border-color:var(--c,#666);opacity:.8;
+  box-shadow:0 0 3px var(--c)44;position:relative}
+.st.on.oct0{opacity:.5;filter:brightness(.7)}
+.st.on.oct2{opacity:1;filter:brightness(1.3);box-shadow:0 0 6px var(--c)66}
+.st.on::after{font-size:6px;position:absolute;bottom:0;right:1px;color:#fff8;pointer-events:none}
+.st.on.oct0::after{content:'L'}
+.st.on.oct1::after{content:'M'}
+.st.on.oct2::after{content:'H'}
+.st.bk{border-color:#1a1a1e}
+.st.cur{box-shadow:inset 0 0 0 1px #fff4}
+.seq-sep{grid-column:1/-1;height:2px;background:#1a1a1e;margin:1px 0}
+
+/* Life cells */
+.st.born{animation:cellBorn .3s ease-out}
+.st.dying{animation:cellDie .3s ease-in}
+@keyframes cellBorn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:.8}}
+@keyframes cellDie{0%{opacity:.8}100%{opacity:0;transform:scale(.5)}}
+
+/* ===== PLAY MODES ===== */
+.play-modes{display:flex;gap:3px;margin:4px 0;flex-wrap:wrap}
+.play-modes .pm{font-size:10px;padding:2px 7px;border-radius:3px;
+  background:#0e0e10;border:1px solid #1a1a1e;color:#3a3a3a;
+  cursor:pointer;transition:all .1s;letter-spacing:1px}
+.play-modes .pm:hover,.play-modes .pm.on{border-color:var(--hi);color:var(--hi)}
+
+/* ===== PRESETS ===== */
+.preset-row,.mode-row{display:flex;gap:3px;margin:4px 0;flex-wrap:wrap}
+.pre,.mode{font-size:9px;padding:2px 6px;border-radius:3px;
+  background:#0e0e10;border:1px solid #1a1a1e;color:#3a3a3a;
+  cursor:pointer;transition:all .1s;letter-spacing:.5px}
+.pre:hover,.pre.on{border-color:var(--acc);color:var(--acc)}
+.mode:hover,.mode.on{border-color:#50c8a0;color:#50c8a0}
+
+/* ===== TRANSPORT ===== */
+.tran{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;justify-content:center;max-width:420px}
+.btn{font-size:13px;padding:6px 14px;border-radius:5px;border:2px solid #1e1e22;
+  background:linear-gradient(160deg,#1c1c20,#141416);color:#555;font-weight:600;
+  cursor:pointer;transition:transform .04s,box-shadow .04s;
+  box-shadow:0 3px 0 #08080a,0 4px 8px #00000066;letter-spacing:1px;transform:translateY(0)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #08080a,0 1px 3px #00000044}
+.btn.go{border-color:#4a6;color:#4a6;box-shadow:0 3px 0 #08080a,0 4px 8px #00000066,0 0 14px #4a633}
+.btn.rec-on{border-color:#e55;color:#e55;animation:pulse .8s infinite}
+
+/* ===== PAD MENU ===== */
+.modal-overlay{position:fixed;inset:0;background:#000a;z-index:200;display:none}
+.modal-overlay.show{display:block}
+.pad-menu{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;
+  background:#18181c;border-top:1px solid #2a2a2e;border-radius:12px 12px 0 0;
+  padding:16px;z-index:210;display:none;flex-direction:column;gap:8px}
+.pad-menu.show{display:flex}
+.pad-menu .pm-title{font-size:13px;color:#888;text-align:center;margin-bottom:4px}
+.pm-btn{padding:10px;background:#0e0e10;border:1px solid #222;border-radius:8px;
+  color:#666;font-size:13px;text-align:center;cursor:pointer;transition:all .1s}
+.pm-btn:hover{border-color:var(--hi);color:var(--hi)}
+
+/* ===== SOUND BROWSER ===== */
+.sound-browser{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;
+  height:55vh;background:#141418;border-top:1px solid #2a2a2e;border-radius:12px 12px 0 0;
+  z-index:210;display:none;flex-direction:column}
+.sound-browser.show{display:flex}
+.sb-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+  border-bottom:1px solid #1e1e22}
+.sb-head .sb-title{font-size:13px;color:#888;letter-spacing:2px}
+.sb-close{color:#555;cursor:pointer;font-size:18px;padding:4px 8px}
+.sb-cats{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid #1a1a1e;overflow-x:auto}
+.sb-cat{font-size:10px;padding:3px 8px;border-radius:3px;background:#0e0e10;border:1px solid #1a1a1e;
+  color:#444;cursor:pointer;white-space:nowrap}
+.sb-cat.on{border-color:var(--acc);color:var(--acc)}
+.sb-list{flex:1;overflow-y:auto;padding:8px}
+.sb-snd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+  margin-bottom:4px;background:#0e0e10;border:1px solid #1a1a1e;border-radius:6px;
+  cursor:pointer;transition:all .1s}
+.sb-snd:hover{border-color:var(--c,#555)}
+.sbs-nm{font-size:12px;color:#888}
+.sbs-tp{font-size:10px;color:#444}
+
+/* ===== DRONE BAR ===== */
+.drone-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;
+  background:var(--p);border-top:1px solid var(--b);padding:6px 10px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;z-index:100}
+.drone-toggle{width:40px;height:40px;border-radius:50%;border:2px solid #222;background:none;
+  color:#444;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;transition:all .15s}
+.drone-toggle.on{background:#222;color:var(--hi);border-color:var(--hi)}
+.drone-toggle .icon{font-size:14px}
+.sruthi-sel{display:flex;align-items:center;gap:4px}
+.sruthi-sel label{font-size:10px;color:#444}
+.sruthi-sel select{background:#0a0a0b;color:#666;border:1px solid #222;padding:2px 4px;
+  border-radius:3px;font-size:11px}
+.vol-ctrl{display:flex;align-items:center;gap:4px;margin-left:auto}
+.vol-ctrl label{font-size:10px;color:#444}
+.vol-ctrl input{width:50px;accent-color:var(--hi);height:3px}
+
+/* ===== DJ EFFECTS (inside drone bar) ===== */
+.dj-row{display:flex;gap:3px;flex-wrap:wrap}
+.dj{font-size:8px;padding:3px 6px;border-radius:4px;border:1px solid #222;
+  background:#0e0e10;color:#444;font-weight:600;
+  cursor:pointer;letter-spacing:1px;transition:all .1s}
+.dj:active{transform:scale(.95)}
+.dj.on{border-color:var(--acc);color:var(--acc);box-shadow:0 0 8px #c8a05022}
+
+/* ===== SHARE OVERLAY ===== */
+.share-overlay{position:fixed;inset:0;background:#000d;z-index:300;display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px}
+.share-overlay.show{display:flex}
+.share-card{background:#18181c;border:1px solid #2a2a2e;border-radius:12px;padding:20px;
+  width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;text-align:center}
+.share-card h3{color:var(--hi);font-size:16px;letter-spacing:2px}
+.share-card .timer{font-size:28px;color:var(--hi);font-weight:700}
+.share-btn{padding:12px;border-radius:8px;border:1px solid #333;background:#0e0e10;
+  color:#888;font-size:13px;cursor:pointer;transition:all .1s;text-align:center}
+.share-btn:hover{border-color:var(--hi);color:var(--hi)}
+.share-btn.wa{border-color:#25d366;color:#25d366}
+.share-btn.wa:hover{background:#25d36611}
+.share-btn.dl{border-color:var(--acc);color:var(--acc)}
+
+/* ===== SIGNATURE ===== */
+.sig{text-align:center;margin:16px 0 8px;cursor:pointer}
+.sig .zap{font-size:18px;opacity:0.2;transition:all .3s;display:inline-block}
+.sig .zap.lit{opacity:1;transform:scale(1.3);filter:drop-shadow(0 0 8px #f0c040)}
+.sig .sig-text{font-size:9px;color:#222;letter-spacing:2px;transition:all .3s;display:block;height:0;overflow:hidden}
+.sig .sig-text.show{height:14px;color:#444}
+
+
+/* ===== PAD EFFECT OVERLAYS ===== */
+.pad .drag-overlay{position:absolute;inset:0;border-radius:6px;pointer-events:none;transition:background .05s}
+.pad .pitch-bar{position:absolute;left:50%;width:3px;background:#4af;border-radius:2px;
+  pointer-events:none;opacity:0;transition:opacity .1s}
+.pad .pitch-bar.show{opacity:.7}
+
+/* ===== MOOD BAR ===== */
+.mood-bar{width:100%;max-width:420px;display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;justify-content:center}
+.mood{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid #1e1e22;
+  background:var(--p);color:#444;cursor:pointer;transition:all .15s;letter-spacing:1px}
+.mood:hover,.mood.on{border-color:var(--hi);color:var(--hi);background:#1c1c20}
+.mood .me{font-size:11px;margin-right:2px}
+
+/* ===== TALA MARKERS ===== */
+.tala-bar{width:100%;max-width:420px;display:flex;gap:3px;margin-bottom:3px;flex-wrap:wrap}
+.tala-bar .tb{font-size:9px;padding:2px 6px;border-radius:3px;background:#0e0e10;
+  border:1px solid #1a1a1e;color:#3a3a3a;cursor:pointer;transition:all .1s;letter-spacing:.5px}
+.tala-bar .tb:hover,.tala-bar .tb.on{border-color:#50c8a0;color:#50c8a0}
+.st.tala-accent{border-bottom:2px solid #50c8a044}
+.st.tala-beat{border-bottom:2px solid #50c8a022}
+
+/* ===== MOOD DESC ===== */
+.mood-desc{width:100%;max-width:420px;font-size:9px;color:#555;line-height:1.4;
+  margin-bottom:6px;text-align:center;min-height:20px;max-height:28px;overflow:hidden}
+
+/* ===== UNDO/REDO ===== */
+.btn.undo{font-size:16px;padding:6px 10px}
+
+/* ===== SHARE IMAGE ===== */
+.share-card canvas{width:100%;border-radius:6px;border:1px solid #2a2a2e}
+
+/* ===== AUTO-ACCOMP ===== */
+.btn.auto{border-color:#50c8a0;color:#50c8a0}
+.btn.auto.on{box-shadow:0 0 10px #50c8a022}
+
+/* ===== COLOR PICKER ===== */
+.color-pick{text-align:center;margin:10px 0 4px;position:relative;display:flex;justify-content:center}
+.cp-main{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid #2a2a2e;
+  transition:transform .15s,box-shadow .15s;background:var(--hi)}
+.cp-main:hover{transform:scale(1.15)}
+.cp-tray{display:none;position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+  background:#111114;border:1px solid #2a2a2e;border-radius:14px;padding:6px 8px;
+  gap:6px;flex-wrap:wrap;max-width:200px;justify-content:center;z-index:10;
+  box-shadow:0 4px 16px #00000088}
+.cp-tray.open{display:flex}
+.cp-tray .cp{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+  transition:transform .1s,border-color .15s}
+.cp-tray .cp:hover{transform:scale(1.2)}
+.cp-tray .cp.on{border-color:#fff6}
+
+/* ===== BODY RECORDING STATE ===== */
+body.song-rec{border:3px solid #e55;border-radius:0}
+body.song-rec::after{content:'';position:fixed;inset:0;border:3px solid #e55;
+  pointer-events:none;z-index:99;animation:pulse .8s infinite}
+</style>
+</head>
+<body>
+
+<h1 id="logo"><span class="logo-l" data-si="1">R</span><span class="logo-s">a</span><span class="logo-l" data-si="2">G</span><span class="logo-s">a</span><span class="logo-l" data-si="3">M</span><span style="display:inline-block;width:12px"></span><span class="logo-l" data-si="4">P</span><span class="logo-s">a</span><span class="logo-l" data-si="5">D</span></h1>
+<div id="status"><span class="led" id="led"></span><span id="msg">tap a pad to start</span></div>
+
+<!-- MOOD FILTER -->
+<div class="mood-bar" id="moodBar">
+  <div class="mood on" data-mood="all"><span class="me">&#9734;</span>All</div>
+  <div class="mood" data-mood="kurinji"><span class="me">&#9650;</span>Kurinji</div>
+  <div class="mood" data-mood="mullai"><span class="me">&#9752;</span>Mullai</div>
+  <div class="mood" data-mood="marudam"><span class="me">&#9670;</span>Marudam</div>
+  <div class="mood" data-mood="neidhal"><span class="me">&#8776;</span>Neidhal</div>
+  <div class="mood" data-mood="palai"><span class="me">&#9711;</span>Palai</div>
+  <div class="mood" data-mood="morning"><span class="me">&#9728;</span>Morning</div>
+  <div class="mood" data-mood="evening"><span class="me">&#9790;</span>Evening</div>
+</div>
+
+<!-- MOOD DESCRIPTION -->
+<div class="mood-desc" id="moodDesc"></div>
+
+<!-- RAGA SELECTOR -->
+<div class="raga-bar">
+  <select id="ragaSel" onchange="selectRaga(this.value)">
+    <option value="kalyani">Kalyani</option>
+    <option value="sankara">Sankarabharanam</option>
+    <option value="bhairavi">Bhairavi</option>
+    <option value="kamas">Kamaas</option>
+    <option value="kambodhi">Kambodhi</option>
+    <option value="sahana">Sahaana</option>
+    <option value="dhanyasi">Dhanyasi</option>
+    <option value="hindolam">Hindholam</option>
+    <option value="kanada">Kaanada</option>
+    <option value="begada">Begada</option>
+    <option value="shanmuk">Shanmukhapriya</option>
+    <option value="mohanam">Mohanam</option>
+    <option value="hamsadhwani">Hamsadhwani</option>
+    <option value="charukeshi">Charukeshi</option>
+    <option value="natabhairavi">Natabhairavi</option>
+    <option value="simhendra">Simhendramadhyamam</option>
+    <option value="harikambhoji">Harikambhoji</option>
+    <option value="mayamalavagowla">Mayamalavagowla</option>
+    <option value="keeravani">Keeravani</option>
+    <option value="abhogi">Abhogi</option>
+    <option value="revathi">Revathi</option>
+  </select>
+  <div class="aroha" id="arohaDisp"></div>
+</div>
+
+
+<!-- OCTAVE -->
+<div class="oct-bar">
+  <button class="oct-btn" onclick="setOctave(0)" id="octL">Low</button>
+  <button class="oct-btn active" onclick="setOctave(1)" id="octM">Mid</button>
+  <button class="oct-btn" onclick="setOctave(2)" id="octH">High</button>
+</div>
+
+<!-- RAGA PADS -->
+<div class="pad-box" id="ragaPadBox">
+  <div class="sh">raga pads</div>
+  <div class="pads" id="padGrid"></div>
+</div>
+
+<!-- SOUND PADS -->
+<div class="pad-box" id="sndPadBox">
+  <div class="sh">sound pads</div>
+  <div class="pads" id="sndPadGrid"></div>
+</div>
+
+<!-- KNOBS -->
+<div class="knob-bar">
+  <div class="knob-ctrl" id="knobBPM"><div class="kl">BPM</div>
+    <div class="knob"><div class="knob-track"></div><div class="knob-ind" id="indBPM"></div></div>
+    <div class="kv" id="kvBPM">90</div></div>
+  <div class="knob-ctrl" id="knobGMK"><div class="kl">Gamaka</div>
+    <div class="knob"><div class="knob-track"></div><div class="knob-ind" id="indGMK"></div></div>
+    <div class="kv" id="kvGMK">80%</div></div>
+  <div class="knob-ctrl" id="knobDEC"><div class="kl">Decay</div>
+    <div class="knob"><div class="knob-track"></div><div class="knob-ind" id="indDEC"></div></div>
+    <div class="kv" id="kvDEC">3.0</div></div>
+  <div class="knob-ctrl" id="knobREV"><div class="kl">Reverb</div>
+    <div class="knob"><div class="knob-track"></div><div class="knob-ind" id="indREV"></div></div>
+    <div class="kv" id="kvREV">0.30</div></div>
+</div>
+
+<!-- TRANSPORT -->
+<div class="tran">
+  <button class="btn" id="bPlay">&#9654; PLAY</button>
+  <button class="btn" id="bStop">&#9632; STOP</button>
+  <button class="btn" id="bClear">CLR</button>
+  <button class="btn" id="bRec">&#9679; REC</button>
+  <button class="btn undo" id="bUndo">&#8630;</button>
+  <button class="btn undo" id="bRedo">&#8631;</button>
+  <button class="btn auto" id="bAuto">AUTO</button>
+  <button class="btn" id="bSongRec">&#9679; SONG</button>
+</div>
+
+<!-- SEQUENCER -->
+<div class="seq-box">
+  <div class="sh">step sequencer</div>
+  <div class="play-modes" id="playModes">
+    <div class="pm on" data-pm="linear">linear</div>
+    <div class="pm" data-pm="bounce">bounce</div>
+    <div class="pm" data-pm="random">random</div>
+    <div class="pm" data-pm="pendulum">pendulum</div>
+    <div class="pm" data-pm="life">life</div>
+    <div class="pm" data-pm="multi-rate">multi-rate</div>
+    <div class="pm" data-pm="spiral">spiral</div>
+  </div>
+  <div class="tala-bar" id="talaBar">
+    <div class="tb on" data-tala="none">none</div>
+    <div class="tb" data-tala="adi">adi (4+2+2)</div>
+    <div class="tb" data-tala="rupaka">rupaka (2+4)</div>
+    <div class="tb" data-tala="misra">misra (3+2+2)</div>
+  </div>
+  <div class="seq" id="seq"></div>
+  <div class="sh" style="margin-top:6px">presets</div>
+  <div class="preset-row" id="presets"></div>
+  <div class="sh" style="margin-top:4px">generators</div>
+  <div class="mode-row" id="modes"></div>
+</div>
+
+<!-- VISUALIZER -->
+<div class="viz-box">
+  <div class="viz-modes" id="vizModes">
+    <div class="vm on" data-viz="radial">radial</div>
+    <div class="vm" data-viz="bars">bars</div>
+    <div class="vm" data-viz="scope">scope</div>
+    <div class="vm" data-viz="lissajous">lissajous</div>
+    <div class="vm" data-viz="particles">particles</div>
+    <div class="vm" data-viz="mirror">mirror</div>
+  </div>
+  <div class="viz"><canvas id="vizCanvas"></canvas></div>
+</div>
+
+<!-- COLOR PICKER -->
+<div class="color-pick" id="colorPick">
+  <div class="cp-main" id="cpMain"></div>
+  <div class="cp-tray" id="cpTray"></div>
+</div>
+
+<!-- SIGNATURE -->
+<div class="sig" id="sigBlock">
+  <span class="zap" id="sigZap">&#9889;</span>
+  <span class="sig-text" id="sigText">ragam pad</span>
+</div>
+
+<!-- PAD MENU (modal) -->
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="pad-menu" id="padMenu">
+  <div class="pm-title" id="pmTitle">PAD</div>
+  <div class="pm-btn" data-act="browse">&#9776; Browse Sounds</div>
+  <div class="pm-btn" data-act="record">&#9679; Record from Mic</div>
+  <div class="pm-btn" data-act="remove">&#10005; Remove Sound</div>
+</div>
+
+<!-- SOUND BROWSER (modal) -->
+<div class="sound-browser" id="soundBrowser">
+  <div class="sb-head">
+    <div class="sb-title">SOUNDS</div>
+    <div class="sb-close" id="sbClose">&#10005;</div>
+  </div>
+  <div class="sb-cats">
+    <div class="sb-cat on" data-cat="strings">Strings</div>
+    <div class="sb-cat" data-cat="bass">Bass</div>
+    <div class="sb-cat" data-cat="synth">Synth</div>
+    <div class="sb-cat" data-cat="drums">Drums</div>
+    <div class="sb-cat" data-cat="recorded">Recorded</div>
+  </div>
+  <div class="sb-list" id="sbSounds"></div>
+</div>
+
+<!-- SHARE OVERLAY -->
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-card">
+    <h3>YOUR JAM</h3>
+    <div class="timer" id="shareTimer"></div>
+    <canvas id="shareCanvas" width="400" height="200"></canvas>
+    <div class="share-btn" id="sharePlay">&#9654; Play Preview</div>
+    <div class="share-btn dl" id="shareAll">&#8593; Share</div>
+    <div class="share-btn" id="shareClose">Close</div>
+  </div>
+</div>
+
+<!-- DRONE BAR -->
+<div class="drone-bar">
+  <button class="drone-toggle" id="droneBtn" onclick="toggleDrone()">
+    <span class="icon">&#x266B;</span>
+    <span style="font-size:8px">Drone</span>
+  </button>
+  <div class="sruthi-sel">
+    <label>Sruthi</label>
+    <select id="sruthiSel" onchange="setSruthi(this.value)">
+      <option value="-1">B</option>
+      <option value="0" selected>C</option>
+      <option value="1">C#</option>
+      <option value="2">D</option>
+      <option value="3">D#</option>
+      <option value="4">E</option>
+      <option value="5">F</option>
+      <option value="6">F#</option>
+      <option value="7">G</option>
+      <option value="8">G#</option>
+      <option value="9">A</option>
+      <option value="10">A#</option>
+    </select>
+  </div>
+  <div class="vol-ctrl">
+    <label>Vol</label>
+    <input type="range" id="volSlider" min="0" max="100" value="60" oninput="masterVol=this.value/100">
+  </div>
+  <div class="dj-row">
+    <div class="dj" data-fx="stut">STUT</div>
+    <div class="dj" data-fx="half">SLOW</div>
+    <div class="dj" data-fx="2x">FAST</div>
+    <div class="dj" data-fx="fltr">FLTR</div>
+  </div>
+</div>
+
+<script>
+var gmkdata = [];
+
+gmkdata['dhanyasi'] = `D1LL#(p d)
+D1HZ#(p d)
+D1HL#(p d)
+D2LL#((d p d p))
+D2HZ#(((n)/d(p)d p))
+D2HL#((n/p/d,))#(((n)/d(p)d p))
+D3LL#((d p d p))
+D3HZ#(((n)/d(p)d p))
+D3HL#((n/p/d,))#(((n)/d(p)d p))
+D4HZ#(((n)/d(p)d (p d)))
+D4HL#(((n)/d(p)d (p d)))
+D4HR#(((n)/d(p)d (p d)))
+D4RL#((d p d p))
+G1ZH#(m/r*/)
+G1LL#(s g)#(s/m/)
+G1LH#(m/r*/)
+G1HL#(g(m/g))
+G1HH#(g(m/g))
+G1HR#(r* m)
+G1RH#(m r*)
+G2ZZ#((r* r<< r* r<<))
+G2ZL#((r* r<< r* r<<))
+G2ZH#((m r*/m/(r* m/)))
+G2ZR#((m r* m r*))
+G2LZ#((m r* m r*))
+G2LL#((g(,) r* g(,)))#((r* g r* g ))
+G2LH#((m/r* g r*))
+G2LR#((r*(,)m(,)/r*))
+G2HZ#((m r* m r*))
+G2HL#((r* m r*,))
+G2HH#((g/m/g/m))#((r*/m/r*/m))
+G2HR_P#((p m/r*/m))
+G2HR#((m/r*//m/r*))#((/r*/m/r*/m))
+G2RZ#((m r* m r*))#((r* r<< r* r<<))
+G2RL#((r*r<<< r,))
+G2RH#((r*(,)m(,)/r*))
+G2RR#((r*(,)m(,)/r*))
+G3ZZ#(((m(,) r*)/m/( r* m/(r))-(,)))
+G3ZL#(((m(,) r*)/m/( r* m/r(s))))
+G3ZH#(((m(,) r*)/m/( r* m/(r))-(,)))
+G3ZR#((m r* m r*))
+G3LZ#((m r* m r*))
+G3LL#((r* g r* g ))
+G3LH#((m/r* m r*))
+G3LR#((m r* m r*))
+G3HZ_P#(((p m r*)/m/((r*)m/(r))-(,)))
+G3HZ#(((m(,) r*)/m/( r* m/(r))(,)))
+G3HL_P#(((p m r*)/m/((r*)m/r(s))))
+G3HL#((r* m r* (m /r*)))
+G3HH#(((m)/r* m r* (m)))
+G3HR#((m/r*/m/r*))#((/r*/m/r*/m))
+G4ZZ#(((m(,) r*)/m/( r* m/(r))-(,)))
+G4ZH#(((m/r*<<, m r*<<, m g)))
+G4LZ#((((s)m r*)/m/( r* m/(r))-(,)))
+G4LL#(((s(/m g))r*(r*g(,)r(,)*)))
+G4LH#(((m/r*<<, m r*<<, m g)))
+G4LR#((((s)m r*)/m/( r* m/(r))-(,)))
+G4HZ#((r* m r* (m /r*)))
+G4HL_P#(((p m r*)/m/((r*)m/r(s))))
+G4HL#((r* m r* (m /r*)))
+G4HH#(((m/r*<<, m r*<<, m g)))
+G4HR#((r* m r* (m /r*)))
+M1HH#((m p m,))
+M2HH#((m p m,))
+M3HH#(((m)p m,(,)))
+M4HH#(((m p) m,,))
+N1LL#(d *n)#(/s↑ d*)
+N1LH#((n s↑)d*<<)#((n<<(,) d* n(,)))
+N1HL#n#(s↑/n)
+N1HH#(d*n)#n
+N1HR#(d* n)#n
+N1RH#n#d*
+N2ZR#((d*<< n d*<< n))#((d*<< n d*<< n))
+N2LL#((p//s↑ d* n/))#((p/n d* n/))
+N2LH_P#(((p n)s↑/d* s↑))#((n(,) d* n(,)))
+N2LH#(((n)s↑(,)/d* s↑))#((n(,) d* n(,)))
+N2LR#((d*<< n d*<< n))
+N2HZ#((s↑/d* n,))
+N2HL#((s↑/d* n,))
+N2HH#((s↑/d* n,))
+N2HR#((d*<< n d*<< n))
+N2RZ#((d*<< n d*<< n))
+N2RH#((d*<< n<< d*<< n<<))
+N3LL#((p//s↑ d* n))#(((p/ n>>(,) d*(,) n>>(,) d*(,) n>>)))
+N3LH#(((p)s↑/d* s↑(,)))#((/n<<</d*n/d*))
+N3LR#((p(,)//(s↑)n,))#((n d* n,))
+N3HL#((s↑/d* n d*))
+N3HH#(((s↑)/n d*n(,)))
+N3HR_S#(((s↑ d*<<)n d*<< n))
+N3HRC#((d*<< n d*<< n))#((d*<< s↑ d*<< n))
+N3HRE#((d*<< n d*<< n))#((d*<< s↑ d*<< n))
+N3HR#((d*<< n d*<< n))#((d*<< s↑ d*<< n))
+N3RH#((d*<< n d*<< n))
+N4ZL_S#(((s↑/ n>>(,) d*(,) n>>(,) d*(,) n>>)))#(((n  n>>(,) d*(,) n>>(,) d*(,) n>>)))
+N4ZL#(((p//n<(,) d*<<(,) n<(,) d*<<(,) n)))#(((p/ n>>(,) d*(,) n>>(,) d*(,) n>>)))
+N4LZ#(((p,/S↑,/d*<<//s↑(,)/d<<*(,))))
+N4LL#(((p/ n>>(,) d*(,) n>>(,) d*(,) n>>)))
+N4LH#(((p,/(n)s↑(,)/d*<</s↑(,)/d<<*(,))))#(((p,///S↑,/d*<</s↑/d<<,*)))
+N4HL#(((s↑/ n>>(,) d*(,) n>>(,) d*(,) n>>)))
+P1HZ_S#(((s↑))/p(,(,)))
+P1HZ#p
+P1HL_S#(((s↑))/p(,(,)))
+P1HL#p
+P1HH_S#(((s↑))/p(,(,)))
+P1HH#p
+P2HZ_S#(((s↑))/p(,(,)))
+P2HZ#p
+P2HL_S#(((s↑))/p(,(,)))
+P2HL#p
+P2HH_S#(((s↑))/p(,(,)))
+P2HH#p
+P2LZ_S#(((s))//p(,(,)))
+P2LZ#P
+P2LL_S#(((s))//p(,(,)))
+P2LL#p
+P2LR_S#(((s))//p(,(,)))
+P2LR#p
+R1LL#(s r)#(r s)
+R1HL#((g/r s r))#((s)r(s))
+R1HR#(s r)
+R2LL#((r s) r)
+R2HL#((r, s r))
+R3LL#((r s) r)
+R3HL#((r, s r))
+R4LL#(((s r)s r s))
+S1LL_P#((p↓)//s(,))#((p↓//s, d↓*))
+S1LL#s
+S2LL_P#((p↓)//s(,))#((p↓//s, d↓*))
+S2LL#s
+S3LL_P#((p↓///s, d↓*))#((p↓/s/d↓*/s))
+S3LL#s
+S4LL_P#((p↓/s/d↓*/s))#((p↓//s, d↓*))
+S4LL#s
+S1LR_P#((p↓//s, d↓*))
+S1LR#s
+S2LR_P#((p↓//s, d↓*))
+S2LR#s
+S3LR_P#((p↓//s, d↓*))#((p↓/s/d↓*/s))
+S3LR#s
+S4LR_P#((p↓//s/d↓*//s))#((p↓//s, d↓*))
+S4LR#s
+8`;
+
+gmkdata['hindolam'] = `D1ZR#(n d)#(d<<< d)
+D1LL#d
+D1LH#d#((n)/d(,))
+D1LR#d#(n d)
+D1HR#(n d)#(d<<< d)
+D2ZH#d
+D2LZ#((d>> d d>> d))
+D2LL#((d>> d d>> d))
+D2LH#((n/d,,))#d
+D2HL#((n/d n/d))#((n)/d(,))
+D2HH#d
+D2RH#(n d)
+D3LL#((d>> d d>> d))
+D3LH#((n/d n/d))#((n)/d(,))
+D3HZ_S#((n)/d(,))
+D3HZ#((n)/d(,))
+D3HL_S#((n)/d(,))
+D3HL#((n(,)/d/ n(d)))#((n)/d(,))
+D3HH_S#((n)/d(,))
+D3HH#((n/d n/d))#((n)/d(,))
+D4HL#(((n(,)/d n(,))/d,))#((n)/d(,))
+D4HH#((n)/d(,))#(((n(,)/d n(,))/d,))
+G1ZL_S#(s/g)#g
+G1ZL#g
+G1ZH#(m g)
+G1ZR#(m g)#(g<<< g)
+G1LL_S#(s/g)#g
+G1LL_N#(n↓/g)#g
+G1LL#g
+G1LH#((g m)g)#(m g)
+G1LR#(g<<< g)#(m g)
+G1HH#(m g)#g
+G1HR#(m g)#(g<<< g)
+G2ZL#((m(,)(g m)g(,)))
+G2ZH#((m)g(,))#((m g g<<< g))
+G2LL#((s)(g<< g g<<))
+G2LH#((m)g(,))#((m g g<<< g))
+G2HLB#((g m/g m))#((g m g,))
+G2HLA#((g m/g m))#((g m g,))
+G2HL#((g m g,))#((/g m/g m))
+G2HH#((g m g,))
+G2RH#(m g)
+G3ZL#((m//g//m//g))
+G3ZH#((m//g g<<<g))#(((m)/g(,)((m)/g(,)//m g)))
+G3LL#((s)(g<<g g<<))
+G3LH#(((m)/g(,)((m)/g(,)//m g)))
+G3HL#((m/g m/g))#((g//m)/g)
+G3HH#((m//g//m/g))#((m)/g(,))
+G3HR#((g//m)/g)#((m//g//m//g))
+G3RZ#((g//m)/g)
+G3RL#((g//m)/g)
+G3RH#((m)g(,))
+G3RR#((g//m)/g)
+G4LL#((s)g(,))#(g(,)((g>> g)))
+G4LH#(((m)/g(,)((m)/g(,)//m g)))
+G4HL#(((m)/g(m)/g m))
+G4HH#((m(,) g/(m)/g/))
+M1ZR#(d/m)#(m<<< m)
+M1LL#m#(s//m)
+M1LR#(d/m)#(m<<< m)
+M1HR#(d/m)#(m<<< m)
+M1RLB#m#(m>m)
+M1RLA#m#(m>m)
+M1RL#((m>>>)m(,))#((g<<<)m(,))
+M1RHB#(m>m)
+M1RHA#(m>m)
+M1RH#((g<<<)m(,))
+M2RH#m#((m>>>)m(,))
+M3LL_S#((s)//m(,))
+M3LL_G#((g)//m(,))
+M3LL#m
+M4HL#((d)/m(,))#m
+M4HH#m#(d/m)
+M4HR#m
+N1ZR#((d/s↑) n)#(n<<< n)
+N1LH_M#((m)/n(,))#((m/s↑) n)
+N1LH_D#((d/s↑) n)
+N1LH#n
+N1LR#((d/s↑) n)#(n<<< n)
+N1HL#n#(s↑/n)
+N1HH#n
+N1HR#(s↑/n)#(n<<< n)
+N1RL#((s↑>>>>)n(,))#((n>>>)n(,))
+N1RH#((s↑>>>>)n(,))#((n>>>)n(,))
+N2LL#((d s↑)n)#((n n<<< n n<<<))
+N2LH#(s↑ n)
+N2HL__D#(n/d)
+N2HL#((s↑)/n(,))#n
+N2HH#((s↑ n,,))#n
+N2RL#((n d)n)
+N2RH#(n>>> n)#(s↑ n)
+N3ZL#((n(s↑>>>)n,(,)))
+N3LL#(((n<<)n/(s↑>>>)//n(,)(n<<)))#((n(,)/(s↑>>>)//n(,)/(s↑>>>)))
+N3LH#(s↑/n)
+N3HL#((s↑//n(,)/(s↑)//n))
+N3HH#(s↑/n)#((s↑(,)/(n)/s↑//n))
+N3HR#(((s↑/n n<<<)n,(,)))#n
+N3RL#((n/(s↑>>>)n,(,)))#n
+N3RH#((s↑//n(,)(n<<<)n))
+N4ZL___0#(((s↑)//n(,)(s↑)//n(,)))#n
+N4ZL#((d)/n(,))#(((s↑)//n(,)/(s↑)//n(,)))
+N4ZH#(((s↑)//n(,)(s↑)//n(,)))
+N4LZ#(((d n d)//n,(,)))
+N4LL#(((s↑) n(,)(s↑)n(,)))
+N4LH#(((s↑// n s↑)//n,(s↑)))#(((d n d)//n,(,)))
+N4LR#(((n s↑)/n/s↑/n))#n
+N4HL#(((s↑)//n(,)(s↑)//n(,)))
+N4HH#(((s↑)//n(,)(s↑)//n(,)))#((s↑//n/s↑//n))
+N4HR#(((d n d))n((,)))
+S1HR#(g s)#s
+S1LR#(g s)#s
+S3ZL__N#((s,,n↓))#s
+S3ZL#s
+S3RL__N#((s,,n↓))#s
+S3RL#s
+S3HZ_G#((g)//s(,))
+S3HZ#s
+S3HL_G#((g)//s(,))
+S3HL#s
+S3HH_G#((g)//s(,))
+S3HH#s
+S4HZ_G#((g)//s(,))
+S4HZ#s
+S4HL_G#((g)//s(,))
+S4HL#s
+S4HH_G#((g)//s(,))
+S4HH#s
+S4ZL__N#((s,,/n↓))#s
+S4ZL#s
+S4RL__N#((s,,/n↓))#s
+S4RL#s
+20`;
+
+gmkdata['bhairavi'] = `D1ZL#(p d)
+D1ZH#(p d)
+D1ZR#(d p)
+D1LZ#((d(,)p(,)d))
+D1LL#(d p )#((d(,)p(,)d))
+D1LH#(d p)
+D1LR#(d p)				
+D1HZ#(d p)
+D1HL#(p d)
+D1HH#d
+D1HR#(p d)
+D1RZ#d#((d>/p(,)/d>(,)))
+D1RL#((d>/p(,)/d>(,)))#d
+D1RH#((d>/p(,)/d>(,)))
+D1RR#((d>/p(,)/d>(,)))
+D2ZZ#((d>/p(,)/d>(,)))
+D2ZL#((d>/p(,)/d>(,)))
+D2ZH#((d>/p(,)/d>(,)))
+D2ZR#((d>/p(,)/d>(,)))
+D2LZ#((d>/p(,)/d>(,)))
+D2LL#((d>(,)/p/d(,)))#d
+D2LH#((d>/p(,)/d>(,)))
+D2LR#((d>/p(,)/d>(,)))
+D2HZ#((p(,)/d>(,)p))
+D2HLB#d#((p(,)/d>(,)p))
+D2HLA#d#((p(,)/d>(,)p))
+D2HL#((p(,)/d>(,)p))#d
+D2HH#d
+D2HR#((d p /d> p))
+D2RZ#((p(,)/d>(,)p))#d
+D2RL#((p(,)/d>(,)p))#d
+D2RH#((p(,)/d>(,)p))
+D2RR#((p(,)/d>(,)p))
+D3ZZ#((p(,)(d)p(,)(d)))
+D3ZL#((p(,)(d)p(,)(d)))
+D3ZH#((p(,)(d)p(,)(d)))
+D3ZR#((p(,)(d)p(,)(d)))
+D3LZ#((d/p/d/p))
+D3LL#((p(,)(d)p(,)(d)))
+D3LH#((p(,)(d)p(,)(d)))
+D3LR#((p(,)(d)p(,)(d)))
+D3HZ#((p(,)(d)p(,)(d)))
+D3HL#((d/p/d/p))
+D3HR#((p(,)(d)p(,)(d)))
+D3RZ#((p(,)(d)p(,)(d)))
+D3RL#((p(,)(d)p(,)(d)))
+D3RH#((p(,)(d)p(,)(d)))
+D3RR#((p(,)(d)p(,)(d)))
+D4ZZ#((p(,)(d)p(,)(d)))
+D4ZL#((p(,)(d)p(,)(d)))
+D4ZH#((p(,)(d)p(,)(d)))
+D4ZR#((p(,)(d)p(,)(d)))
+D4LZ#((p(,)(d)p(,)(d)))
+D4LL#((p(,)(d)p(,)(d)))#(((d)p d p(d)))
+D4LH#((p(,)(d)p(,)(d)))
+D4LR#((p(,)(d)p(,)(d)))
+D4HZ#((p(,)(d)p(,)(d)))
+D4HL#((d,/(p)/d/(p)))#d
+D4HH#((p(,)(d)p(,)(d)))
+D4HR#((p(,)(d)p(,)(d)))
+D4RZ#((p(,)(d)p(,)(d)))
+D4RL#((p(,)(d)p(,)(d)))#((p(,)(d)p(d(,)(p))))
+D4RH#((p(,)(d)p(,)(d)))
+D4RR#((p(,)(d)p(,)(d)))
+d4HZ#d*
+d4HH#d*
+G1ZZ#(r g)
+G1ZL#(r g)
+G1ZH#((r//m(,)//r(,)))
+G1ZR#((r//m(,)//r(,)))
+G1LZ#((r(,)g(,)r))
+G1LL_S#((m>>>(,)/r(,)g))
+G1LL#((r(,)g(,)r))
+G1LR_S#((m>>>/r(,)g(,)))
+G1LR#((r//m(,)//r(,)))#( r /((m>>)/ r< (,)))
+G1LH#((r//m(,)//r(,)))
+G1LR#(g r)
+G1HZ#(r g)
+G1HL#(r g)
+G1HH#(r g)
+G1HR#(r g)
+G1RL#((g(,)r(,)g))
+G1RH#((r//m(,)//r(,)))
+G1RR#(r/(m/r))
+G2ZZ#(r/(g/r))
+G2ZL#((g r(,)g(,)))
+G2ZH#((r//m(,)//r(,)))#( r /((m>>)// r< (,)))
+G2ZR#(r/(m/r))
+G2LZ#((r(,)g(,)r))
+G2LLA#((r g<<<r,))#((g r(,) g(,)))
+G2LLCS#((m>>>/r(,)g(,)))#((/g(,)r(,)g))
+G2LL_N#(((d↓)r g(,)r))
+G2LL#((r(,)g(,)r))#((g r(,) g(,)))
+G2LH_S#((s)/(m/r/g))#((s//m(,)/r(,)))
+G2LH#((r//m(,)/r(,)))#( r /((m>>)// r< (,)))
+G2LR_S#(s//((m)/r(,)))#((s//g<<<(,)/r(,)))
+G2LR#(r/(m/r))
+G2HZ#(r/(m/r))
+G2HL#(r g)#(((r)g(,)r g))
+G2HH#((r//m(,)//r(,)))
+G2HR#((r g, r))
+G2RZ#(r(g r))
+G2RL#(r(g r))
+G2RH#(r(m r))
+G2RR#(r(g r))
+G3ZZ#((r(,)(g)r(,)(g)))
+G3ZL#((r(,)(g)r(,)(g)))
+G3ZH#(((r,(,)//(m)// r,///m/ r,)))
+G3ZR#(((m/r(,)/(g)/)r (g) r))
+G3LZ#((r(,)(g)r(,)(g)))
+G3LL_S#((m>>>/r (m>>(,) r(,) g)))
+G3LL_N#(((d↓)/r(g)r(,)(g)))
+G3LL#((r(,)(g)r(,)(g)))#((g(r g)r(,)(g)))
+G3LH#(((r,,//(m)// r,,//m(,))))#(((r,(,)//(m)// r,//m//r,)))
+G3LR#(((r(,)/(g)/)r(,) (g) r))#((r g r,))
+G3HZ#(((m/r(,)/(g)/)r (g) r))
+G3HL_P#(((p m/r g,(,) g<<(,) r)))
+G3HL#((r g r g))#(((m/r(,)/(g)/)r (g) r))
+G3HH#(((r,(,)//(m)// r,//m/ r,)))
+G3HR#(((m/r(,)/(g)/)r (g) r))
+G3RZ#(((r(,)/(g)/)r(,) (g) r))
+G3RL#(((r(,)/(g)/)r(,) (g) r))
+G3RR#(((r(,)/(g)/)r(,) (g) r))
+G4ZZ#((r(,)(g)r(,)(g)))
+G4ZL#((r(,)(g)r(,)(g)))
+G4ZH#(((r,(,)//(m)// r,//m/ r,)))
+G4ZR#(((r,(,)//(m)// r,//m//r,)))
+G4LZ#((r(,)(g)r(,)(g)))
+G4LL_S#(((s/m>>>/r(,) g r(,) g r)))#((g(r g)r(,)(g)))
+G4LL_N#(((d↓)/r(g)r(,)(g)))
+G4LL#((r(,)(g)r(,)(g)))
+G4LH__P#((((r,,/m>>>)r, m>>)r(m)))
+G4LH#((((r,,//m>>>)r, m>>)r(m))) #(((r,(,)//(m)// r,//m//r,)))
+G4LR#(((r,(,)//(m)// r,//m//r,)))
+G4HZ#(((m//r(,)/(m>>>)//r(,)/(g))//r(,)))#(((m//r(,)/(g)/)r (g) r))
+G4HL_P#(((p m//r g,(,) g<<(,) r)))
+G4HL#(((m//r(,)/(g<<<)/)r (g) r))#((m(//r g,, g<< r)))
+G4HH#(((m//r(,)/(g)/)r (g) r))
+G4HR#(((m//r(,)/(g)/)r (g) r))
+G4RZ#(((r,//(m)// r,(,)//m//r,)))
+G4RL#(((r,//(m)// r,(,)//m//r,)))
+G4RH#(((r,//(m)// r,(,)//m//r,)))
+G4RR#(((r,//(m)/ r,(,)//m//r,)))
+M1LLCS#((s)m(,))
+M1LL#m
+M1HH#(g* p)
+M2LL#((r)//m(,))
+M2LHC#((p))m(,))
+M2LH#m
+M2HZ#m
+M2HLA#(m(m<<<m))#m
+M2HLB#(m(m<<<m))#m
+M2HL#(m(m<<<m))#m
+M2HH_PP#((m p m,))
+M2HH_D#m
+M2HH#m
+M2HL#m
+M3LL#((r)//m(,))
+M3LH_S#((s)//m(,))
+M3LH_R#(((r,(,)/p, g<</(p, /g<<)//r)))
+M3LH#m
+M3HZ_D#((d)/m(,))
+M3HZ#m
+M3HLCP#((p/m m<<m))#((d)/m(,))
+M3HL_D#((d)/m(,))
+M3HL#m#(m(m<<m))
+M3HH_PP#((m p)m)
+M3HH_D#((d)/m(,))
+M3HH#m
+M4LZ#((m>>)m(,))
+M4LH#m#(((r,(,)/p, g<</(p, /g<<)//r)))
+M4HZ_D#((d)/m(,))
+M4HZ#m
+M4HL_D#((d)/m(,))
+M4HL#(m(m<<m))#((d)/m(,))
+M4HH_PP#(((p,(,)//(m)/p/m/p/m,)))#((p)m(,))
+M4HH_D#((d)/m(,))
+M4HH#m
+N1ZH#((d*s↑(,)n(,)))
+N1ZR#((d*s↑(,)n(,)))
+N1LZ#(s↑>>>d*)
+N1LH#(s↑>>>d*)
+N1LR#(n d*)
+N1HL#((d*n(,)d*(,)))
+N1HH#((s↑//d*(,)n(,)))
+N1HR#((d*n(,)d*(,)))
+N1RL#(d* n)#n
+N1RH#((d* n(,) d*(,)))#(d* n)
+N2ZZ#((d* n(,) d*(,)))
+N2ZL#(((p)n d*(,)n))
+N2ZH#((d*/s↑ (,)/d*(s↑)))#((/d↓*/s /d↓*,))
+N2ZR#((d*/n (,)/d*(,) ))#((/d*/s↑ (,)/d*(,) ))
+N2LZ#((d*n, d*))
+N2LL#(((p)n d*(,)n))#((d* n d* n))
+N2LH#(((d)*/s↑,/d*(s↑) ))#((d*/n,/d*))
+N2LR#((d*n(,)d*(,)))#((d*(,)/n<<< d*(,)))
+N2HZ#(((s↑)/d*(,)(s↑>>)d(,)))
+N2HL#(((s↑)/d*,(s↑>>)d))#(((s↑)/d*(,)(s↑>>)d(,)))
+N2HH_R#((r↑>//d*(,)n(,)))
+N2HH#((s↑//d*(,)n(,)))
+N2HR#((s↑/d*(,)s↑(,)))#((s↑/d*,s↑))
+N2RZ#((d*/s↑ (,)/d*(,) ))
+N2RL#((d*n(,)d(,)))#(((s↑>>>)/d*(,)(n*)d(,)))
+N2RH#((d*/s↑(,)/d*(,)))#((d*,/(s↑)/d*(s↑)))
+N2RR#((d*n(,)d(,)))#(((d*,s↑>>>/d*,n<<<d,)))
+N3ZZ#((s↑>>>/d* s↑>>>/d*))#(((/d*,s↑>>>/d*,s↑>>>/d*,)))
+N3ZL#(((d*n,/d*,n d,)))
+N3ZH#((s↑>>>/d* s↑>>>/d*))
+N3ZR#((s↑/d*(s↑)/d*(,)))#(((d*n,/d*,n<<<d,)))
+N3LZ#(((d*,s↑>>>/d*,n<<<d,)))#(((d*,s↑>>>/d*,s↑>>>/d*,)))
+N3LL__P#(((d*,n>>>/d*,n<<<d*,)))
+N3LL_d#(((d*,n>>>/d*,n<<<d*,)))#(((d*,s↑>>>/d*,s↑>>>/d*,)))
+N3LL#(((d*,n<</d*,n/d*,)))#(((d*,//(s↑)/d*,(,)n<<<d,)))
+N3LH#(((d*,s↑>>>/d*,s↑>>>/d*,)))#(((d*,n>>>/d*,s↑<<<d*,)))
+N3LR#(((d*s↑/d*,(,)s↑/d(,) n*)))
+N3HZ#(((s↑)/d*(,)(s↑>>)d*(,)))
+N3HL#(((s↑)/(d*)n<< d*(n d*)))#(((s↑)/d*(,)(s↑>>)d(,)))
+N3HH#(((s↑ d*s↑/d*,s↑/d*,)))
+N3HR#(((s↑)/d*(,)n d*))
+N3RZ#(((s↑)/d*(,)(n*)d(,)))
+N3RL__d#(((n)/d*(,)(n*)d*(,)))#(((s↑)/d*(,)(n*)d*(,)))
+N3RL#(((n)/d*(,)(n*)d(,)))#(((s↑)/d*(,)(n*)d(,)))
+N3RH#((d*,(s↑) /d*(,)))
+N3RR#(((s↑)/d*(,)(n*)d*(,)))
+N4ZZ#(((d*,s↑>>>/d*,n<<<d,)))#(((d*,s↑>>>/d*,s↑>>>/d*,)))
+N4ZL#(((d*n,/d*,n d,)))#(((((p))d*n(,)((,))/d*,n d,)))
+N4ZH#(((d*,s↑>>>/d*,s↑>>>/d*,)))#((/d↓*/s/d↓*,))
+N4ZR#((d*,/(s↑(,))/d*((,))))#(((d*n, /d*,n<<<d,)))
+N4LZ#(((d*,s↑>>>/d*,n<<<d,)))#(((d*,s↑>>>/d*,s↑>>>/d*,)))
+N4LL_d#(((d*,n>>>/d*,n<<<d*,)))#(((d*,s↑>>>/d*,s↑>>>/d*,)))
+N4LL#(((d*,s↑/d*,s↑>>>/d*,)))
+N4LH#(((d*,s↑/d*,s↑/d*,)))
+N4LR#(((d*n/d*,(,)n/d(,) n*)))#(((d*s↑/d*,(,)n/d(,) n*)))
+N4HZ#((((s↑ d*))/d*(,)(s↑>>>)d(,)))#(((d* s↑ /d*)(,)(s↑>>>)d*(,)))
+N4HL_S#(((s↑)/d*(,)(s↑>>>)d(,)))#(((d* s↑ /d*)(,)(s↑>>>)d((d-,))))
+N4HL__d#(((s↑)/(d*)n<< d*(n d*)))#(((s↑)/d*s↑ d*(s↑)))
+N4HL#(((d* s↑ /d*)(,)(s↑>>>)d((d-,))))#(((s↑)/d*(,)(s↑>>>)d(,)))
+N4HH#(((s↑ d*s↑/d*,s↑/d*,)))
+N4HR#(((s↑)/d*(,)s↑>>> d*))
+N4RZ#(((s↑)/d*(,)(n*)d(,)))
+N4RL__d#(((n)/d*(,)(n*)d*(,)))#(((s↑)/d*(,)(n*)d*(,)))
+N4RL#(((s↑)/d*(,)(n*)d(,)))#(((n)/d*(,)(n)d*(,)))
+N4RH#(((d*,s↑/d*,s↑/d*,)))
+N4RR#(((n)/d*(,)(n*)d(,)))#(((s↑)/d*(,)(n*)d*(,)))
+N5ZH#(((d/*s↑/d*/s↑/d*/s↑(,)*/d*(,))))#(((d*,/s↑>>/d*,s↑>/d*,)))
+N5ZR#(((d*,/(s↑>>)/d,*,(s↑>)/d*,)))#(((d/*s↑/d*/s↑/d*/s↑(,)*/d*(,))))
+N5LR#(((d*,/s↑>>/d*,s↑>/d*,)))#(((d/*s↑/d*/s↑/d*/s↑(,)*/d*(,))))
+P1LL_MM#p#(p m)
+P1LL#p
+P2LL_MM#p#(p m)
+P2LL#p
+P3ZL__M#p#(p(,)((,)(p<<)))
+P4ZL#p
+P4RL__M#p#(p(,)((,)(p<<)))
+P2RL#p
+P4HH_S#((s↑//)p(,))
+P2HH#p
+R1RZ#(((r>>>))r((,))(,))#(r>>> r)
+R1RL#(((r>>>))r((,))(,))#(r>>> r)
+R1RH#(((r>>>))r((,))(,))#(r>>> r)
+R1RR#(((r>>>))r((,))(,))#(r>>> r)
+R2ZL#r#((d↓)/r(,))
+R2LH#r
+S3LH#((d↓*)/s(,))
+S4LH#((d↓*)/s(,))
+S3LL#((d↓*)/s(,))
+S4LL#((d↓*)/s(,))
+S3LR#((d↓*)/s(,))
+S4LR#((d↓*)/s(,))
+d4HZC#d*
+d4HZ#d*
+20`;
+
+gmkdata['kanada'] = `D1ZL#d
+D1ZH#d
+D1ZR#d
+D1LZ#d
+D1LL#d
+D1LL_PP#(,d)
+D1LL#d
+D1LH#d
+D1LR#d
+D1HZ#d
+D1HL#d
+D1HH#d
+D1HR#((d>>)d(,))#d
+D1RZ#((d>>)d(,))#d
+D1RL#((d>>)d(,))#d
+D1RH#((d>>)d(,))#d
+D1RR#((d>>)d(,))#d
+D2ZZ#d
+D2ZL#(d(,)(n))#d
+D2ZH#d
+D2ZR#d
+D2LZ#d
+D2LL#(d(,)(n))#d
+D2LH#d
+D2LR#d
+D2HZ#d
+D2HL#((d>>)d(,))#(d(n d))
+D2HH#d
+D2HR#d
+D2RZ#d
+D2RL#(((d>>))d(,)((,)))#(d(n d))
+D2RH#d#((d>>)d(,))
+D2RR#(d(n d))#d
+D3ZZ#d
+D3ZL#d
+D3ZH#d
+D3ZR#d
+D3LZ#d
+D3LL#d
+D3LH#d
+D3LR#d
+D3HZ#d
+D3HL#d
+D3HH#d
+D3HR#d
+G1ZH#((g m,/ g))#g
+G1ZR#((g m,/ g))#g
+G1LH#((g m,/ g))#g
+G1LR#((g m,/ g))#g
+G1HZ#((g m,/ g))#g
+G1HL__R#(g m)
+G1HL#g
+G1HH#((g m,/g))#g
+G1HR#((g//m)/g)#g
+G1RZ#((g//m)/g)#g
+G1RL#((g//m)/g)#g
+G1RH#(m g )#g
+G1RR#((g//m)/g)#g
+G2ZZ#((g//m)/g)#g
+G2ZL#((g//m)/g)#g
+G2ZH#((g//m)/g)
+G2ZR#((g//m)/g)
+G2LZ#((g//m)/g)
+G2LL#((g//m)/g)#g
+G2LH#((g//m)/g)
+G2LR#((g//m)/g)
+G2HZ_M#((m/g//m/g))
+G2HZ#((p(,)/g(,)//m))#((p/g//m/g))
+G2HL_M#((m(,)/g(,)//m))#((m/g//m/g))
+G2HL#((p/g//m/g))
+G2HH_M#((m/g//m/g))
+G2HH#((p(,)/g(,)//m))#((p/g//m/g))
+G2HR#((g//m)/g)
+G2RZ#((g//m)/g)
+G2RL#((g//m)/g)
+G2RH#((g//m)/g)
+G2RR#((g//m)/g)
+G3ZZ#(((g>>)//m(,)/(g>>//m/g,)))
+G3ZL#(((g>>)//m(,)/(g>>//m/g,)))
+G3ZH#((g//m)/g)#(((g>>)//m,/(g>>//m(,)/(g))))
+G3ZR#(((g>>)//m(,)/(g>>//m/g,)))
+G3LZ#(((r/g>>)/ m/(g>>/ m/g,)))
+G3LL#(((r/g>>)/ m/(g>>/ m/g,)))#((((p)/g>>(,))/ m/(g>>/ m/g,)))
+G3LH#(((g>>)//m(,)/(g>>//m/g,)))
+G3LR_R#((r//g>>/ m/g>>))
+G3LR#((r(,)g(,)(m)(g)))#(((r/g>>)/ m/(g>>/ m/g,)))
+G3HZ#((p(,)g(,)(m)(g)))#(((p/g>>)/ m/(g>>/ m/g,)))
+G3HL#((p(,)g(,)(m)(g)))#(((p/g>>)/ m/(g>>/ m/g,)))
+G3HH#((p(,)g(,)(m)(g)))#(((p/g>>)/ m/(g>>/ m/g,)))
+G3HR_M#(((m)//g>/(m)/g>//m))
+G3HR_P#(((p)//g>/(m)/g>//m))
+G3HR#(((p)//g/(m)/g//m))#(((p)//g>>/ m/g>>-(,)))
+G3RZ#((g//m)/g)
+G3RL#((g//m)/g)
+G3RH#((g//m)/g)
+G3RR#((g//m)/g)
+G4ZZ#(((g>>)//m/((,)g>>//m/g,(,))))
+G4ZL#(((g>>)//m/((,)g>>//m/g,(m))))
+G4ZH#((g//m)/g)#(((g>>)//m/((,)g>>//m/g,(,))))
+G4ZR#(((g>>)//m/((,)g>>//m/g,(m))))
+G4LZ#(((g>>)//m(,)/(g>>//m/g,)))
+G4LL#(((g>>)//m(,)/(g>>//m/g,)))
+G4LH#(((g>>)//m(,)/(g>>//m/g,)))
+G4LR#(((g>>)//m(,)/(g>>//m/g,)))
+G4HZ#((( (p)/g>>(,))/ m/(g>>/ m/g,)))
+G4HL#(((g>>)//m/((,)g>>//m/g,(m))))
+G4HH#((p(g m/g//m(,)/g((,))/((m)))))
+G4HR#((((p)/g>>(,))/ m/(g>>/ m/g,)))
+G4RZ#(((g>>)//m(,)/(g>>//m/g,)))
+G4RL#(((g>>)//m(,)/(g>>//m/g,)))
+G4RH#(((g>>)//m(,)/(g>>//m/g,)))
+G4RR#(((g>>)//m(,)/(g>>//m/g,)))
+G5LH#((((g>>)//m(,)//g>>,//m)(g>>//m/g)))#(((g>>)//m(,)/(g>>//m/g,)))
+M2LL#m#((g)//m(,))
+M3LL#m#((g)//m(,))
+M4LL#m#(((g))//m(,)((,)))
+N1LL#n
+N1ZR#((d)n(,))
+N1LH#(n(,)(d))
+N1LR#(n(,)(d))
+N1HZ#n#((d)n(,))
+N1HL_SP#n#((n,(,) p(,)))
+n1HL#((n*<<)s↑(,))#((s↑(,)n*<<s↑(,)))
+N1HH#((d)n(,))#((n)s↑(n))
+N1HR#((d)n(,))#n
+N1RZ#((d)/n(,))
+N1RL#((d)n(d))
+N1RH#((d)/n(,))
+N1RR#((d)n(d))
+N2ZZ#((d/n/d/n))#((d/n,/d))
+N2ZL#(d n)#((d n d n))
+N2ZH#((d)/n(,))
+N2ZR#((d/n/d/n))
+N2LZ#((d/n/d/n))
+N2LL_PP#((p/d)/n>)
+N2LL_NP#((m)/n(,))
+N2LL#((n>(,)d<< n>(,)))#n>
+N2RLBND#((d)n(,))
+N2LH#(n (s↑ d))#(d(s↑ d))
+N2LR#((d/n/d/n))
+N2HZ#(n(,)(d))
+N2HL#((d)n(,)>>)#n
+n2HL#((n*<<)s↑(,))#((s↑(,)n*<<s↑(,)))
+N2HH#((d/n/d/n))
+n2HH#((n*<<)s↑(,))#((s↑(,)n*<<s↑(,)))
+N2HR#(n(,)(d))
+N2RZ#(d n)
+N2RL#((d)n(d))
+N2RH#(d n)
+N2RR#(d n)
+N3ZZ#(((d)/n(,)/(d)/n(,)))
+N3ZL#(((d/n>>d)/n,(,)))
+N3ZH#(((d)/s↑(,)/(d)/s↑(,)))
+N3ZR#(((d)/n(,)/(d)/n(,)))
+N3LZ#(((d)/n(,)/(d)/n(,)))
+N3LL_PP#((p/d)/n>)
+N3LL#n>#((n(,)d n(,)))
+N3LH#((d/s↑,/d))#(((d)/s↑(,)//d//s↑))
+N3LR#(((d)/s↑(,)//d//s↑))
+N3HZ#(((d/n,/d)//n,))
+N3HL#(((d)///n,(,)d))#(((d n,, d n,,)))
+N3HH#(((d/n,/d)//n,))
+N3HR#(((d/n,/d)//n,))
+N3RZ#((d)n(,))#(((/d/n,/d)//n,))
+N3RLBND#((d)n(,))
+N3RL#((d)n(,))#(((/d/n,/d)//n,))
+N3RH#(((d)/s↑(,)//d//s↑))
+N3RR#(((d)/s↑(,)//d//s↑))#(((d)/n(,)//d//n))
+N4ZZ#(((d)/n(,)//d//n))#((d/n>>d<<//(n d)))
+N4ZL#((d/n>>d<<//n))#(((d/n>>)d(,)//n(,)))
+N4ZH#(((d)/s↑(,)//d//s↑))
+N4ZR#((d/n>>d<<//(n d)))
+N4LZ#(((d)/s↑(,)//d//s↑))
+N4LL#n>>
+N4LH#(((d)/s↑,//(d)//s↑))#(((d)/s↑(,)//d//s↑))
+N4LR#(((d/n,/d)//n,))
+N4HZ#(((d/n,/d)//n,))
+N4HL#(((d/n,,/d/n,,)))
+N4HH#(((d/n,/d)//n,))
+N4HR#(((d/n,/d)//n,))
+N4RZ#(((d/n,/d)//n,))
+N4RL#(((d/n,/d)//n,))
+N4RH#(((d/n,/d)//n,))
+N4RR#(((d/n,/d)//n,))
+P2LL_R#((r)/p(,))#p
+P2LL#p
+P2LR_R#((r)/p(,))#p
+P2LR#p
+P2LZ_R#((r)/p(,))#p
+P2LZ#p
+P2LL#p
+P3HZ#p#p
+P3HL#p#p
+P3HR#p#p
+P3LL_R#((r)/p(,))#p
+P3LL#p
+P3LR_R#((r)//p(,))#p
+P3LR#p
+P3LZ_R#((r)//p(,))#p
+P3LZ#p
+P4HZ#p#p
+P4HL#p#p
+P4HR#p#p
+P4LL_R#((r)//p(,))#p
+P4LL#p
+P4LR_R#((r)//p(,))#p
+P4LR#p
+P4LZ_R#((r)//p(,))#p
+P4LZ#p
+R1LLCNS#((n↓)r(,))
+R1LL#r
+R1RZB#((r>>)r(,))
+R1RZ#r
+R1RLB#((r>>)r(,))
+R1RL#r
+R1RHB#((r>>)r(,))
+R1RH#r
+R1RRB#((r>>)r(,))
+R1RR#r
+R1RZA#((r>>)r(,))
+R1RZ#r
+R1RLA#((r>>)r(,))
+R1RL#r
+R1RH#((r>>)r(,))
+R1RRA#((r>>)r(,))
+R1RR#r
+R2LLCNS#((n↓)r(,))
+R2LL#r
+R2RZB#(((r>>))r((,))(,))
+R2RZ#r
+R2RLA#(((r>>))r((,))(,))
+R2RLB#(((r>>))r((,))(,))
+R2RL#r
+R2RRB#(((r>>))r((,))(,))
+R2RRA#(((r>>))r((,))(,))
+R2RR#r
+R2RZA#(((r>>))r((,))(,))
+R2RZ#r
+R2HA#r
+R3LLCNS#(((n↓))r(,)((,)))
+R3LL#r
+R3RZB#(((r>>))r((,))(,))
+R3RZ#r
+R3RLB#(((r>>))r((,))(,))
+R3RL#r
+R3RHB#(((r>>))r((,))(,))
+R3RH#r
+R3RRB#(((r>>))r((,))(,))
+R3RR#r
+R3RZA#(((r>>))r((,))(,))
+R3BZ#r
+R3RLA#(((r>>))r((,))(,))
+R3RL#r
+R3RHA#(((r>>))r((,))(,))
+R3RH#r
+R3RRA#(((r>>))r((,))(,))
+R3RR#r
+R4LLCNS#(((n↓))r(,)((,)))
+R4LL#r
+22`;
+
+gmkdata['begada'] = `D1ZL#((d(,) (d<<<))d)#d
+D1LL#((d(,) (d<<<))d)#d
+D1LH__R#d#(d(,)(r↑))
+D1LH#d
+D1LR#((n*)d(,))#(d<< d)
+D1HL_N#d
+D1HL_S#d
+D1HL#d
+D1RL#(((d>>>))d((,))(,))#(d<< d)
+D2ZL#((d<< d(,) d<<(,)))#((d(,) (d<<<))d)
+D2LL_M#((m)//d(,))
+D2LL#((d<< d(,) d<<(,)))#((d(,) (d<<<))d)
+D2LR#((d(,) d<< d(,)))#((//n*d d<< d))
+D2HL_S#d
+D2HL_N#d
+D2HL#d
+D2RZ#(d>>>d)
+D2RL#(((d>>>))d((,))(,))#(d<< d)
+D2RH#(d>>>d)
+D2RR#(d>>>d)
+D3ZL#((d<< d(,) d<<(,)))#((d(,) (d<<<))d)
+D3LL_M#(((m)//d<< d d<<(,)))
+D3LL#((d(,) (d<<<))d)#((d<< d(,) d<<(,)))
+D3LR#((n*)d(,))#(d<< d)
+D3HL_N#d
+D3HL_S#d
+D3HL#d
+D3RZ#(d>>>d) 
+D3RL#((((d>>>)))d(((,)),(,)))#((d d<<) d)
+D3RH#(d>>>d)
+D3RR#(d>>>d)
+D4ZL#((d<< d d<<d))#((d, (,)(d<<<)d))
+D4LL_M#(((m /d<<)d d<<d))
+D4LL#((d<< d d<<d))#((d, (,)(d<<<)d))
+D4LR#((n*)d(,))#((d<<)d(,))
+D4HL_N#d
+D4HL_S#d
+D4HL#d
+D4RL((((d>>>)))d(((,)),(,)))#((d d<<) d)
+D4RH#((((d>>>)))d(((,)),(,)))#((d d<<) d)
+D4RR#((((d>>>)))d(((,)),(,)))#((d d<<) d)
+G1HL#(g<<m)#g
+G1HH#g<<#(g(g<<g))
+G2HL#(g(g<<m))#g
+G2HH#((g g<< g g<<))#(g(g<<g))
+G2RZ#(g>>>g)
+G2RH#(g>>>g)
+G2RR#(g>>>g)
+G3LH#g
+G3HH#((g g<< g g<<))#(g(g<<g))
+G3RZ#(g>>>g)
+G3RL#(g>>>g)
+G3RR#(g>>>g)
+G4HH#((( g<< g) g<<g,))#(g(g<<g))
+M1ZL#(m(g m))
+M1LL#(g<< m)#((g<< m,,))
+M1LH#(m/(g<//m))#(/p/(g<//m))
+M1LR#(m g<<)
+M1HL#(g m)#m
+M1HH_P#(p/m)#m
+M1HH#m#((m p) m)
+M1RL#(g<< m)
+M1RH#(g<< m)
+M2ZL#(m(g<< m))
+M2ZH#(m(g<< m))#((/m p) m)
+M2LL#((m,,g<<))#(((p)m(,) m g<<))
+M2LH#((m(p) m(,)g<<))#(((p>>)m,(m<<<)m))
+M2LR#m#(m(,)(g<<))
+M2HZ#(m(,)(m<<))
+M2HL#(((m/p))/m/(p))#((g)///m(,))
+M2HH_P#((p)/m(,))#m
+M2HH#m#((m p) m)
+M2HR#(g<< m)
+M2RZ#(g<< m)
+M2RL#(g<< m)
+M2RH#(m(g<< m))
+M2RR#(m(g<< m))
+M3ZL#(m(g<< m))
+M3ZH#(m((g<<) m(,)))#((/m p) m)
+M3ZR#(m((g<<) m(,)))
+M3LL#(((p)m(,)(p m g< m)))
+M3LH#(((m/p>/)m,(/p>/m)))#((m(p)m(,)g<< )) #((((g<<m)/ p,,<(,)/ m, /p>(,)/ )))
+M3LR#(((g p>)//m,(,)-(,)))
+M3HZ#(m(,)(m<<))#(((m//p))//m(,))
+M3HL#(((m//p))//m/(p))#(m(,)(m<<))
+M3HH#(((p/m,/p)/m m*))
+M3HR#(((p/m,//p,//m(,) m*(,) )))#(m((g<<) m(,)))
+M3RL#((p//m,(,)(p)))
+M4ZL#((m((,g<<))m((,g<<))m))
+M4ZH#(m((g<<) m(,)))#((m p) m)
+M4ZR#((m((,g<<))m((,g<<))m))
+M4LL_S#(((p m g<< m, g<<)m))
+M4LL#(((p)m(,)(p m g< m)))#(((p m g<< m, g<<)m))
+M4LH_GD#(((m(g<<) m,, (g<<)  m,,)))
+M4LH#(((g<<m/ p>/ g<< m /p,>/ m)))
+M4LR_S#(((p m g<< m, g<<)m))
+M4LR#(((g p)/m,(,)-(,)))
+M4HZ#((((p)/m(,)//p/m(,)(p m,) -,,)))#(((p(,)/m(,)/p/m(,)/ p/m(m*))))
+M4HL#(((p/m,/p//m(,) p(,) m)))#(((p/m(,) p/ m(,)//p>>/ m,)))
+M4HH#(((p/g m, g//p>>/ m,)))#(((p/m,/p//m(,) p(,) m)))
+M4HR#(((p)m,((,g<<))m))#((m((,g<<))m((,g<<))m))
+M4RZ#((g<<)m(,))
+M4RL#((p/m,(,)(p)))
+M4RH#((g<<)m(,))
+M4RR#((g<<)m(,))
+n1ZR#((s↑)/n*(s↑))
+n1LR#((s↑)/n*(s↑))
+n1RR#((s↑)/n*(s↑))
+n1LL#((d n) n*)#((n d(,) n(,)*))
+N1LH#(s↑ n)
+N1HZ#(n< s↑)
+N1HL#(n< s↑)
+N1HH#(n< s↑)
+N1HR#(s↑ n)
+n1HR#(s↑ n*)
+n1HH#((s↑)/n*(n>>>))
+n1HL_SD#(d/s↑)
+n1HL#(n*s↑)
+n1RZ#((n)/n*(s↑))
+n1RL#((n)/n*(s↑))
+n1RH#((n)/n*(s↑))
+n1RR#((n)/n*(s↑))
+N2ZL#(d n*)
+N2ZH#(s↑(n s↑))
+n2ZR#((s↑)/n*(n>>>))
+n2LR#((s↑)/n*(n>>>))
+n2RR#((s↑)/n*(n>>>))
+n2RL#((s↑)/n*(n>>>))
+n2LZ#((s↑)/n*(n>>>))
+n2LL#((n)/n*(s↑))#(((n s↑ )d n*(d n>>>)))
+n2ZL#((n)/n*(s↑))#(((n s↑ )d n*(d n>>>)))
+n2LR#((s↑)/n*(n>>>))
+n2RZ#((n)/n*(s↑))
+n2RL#((n)/n*(s↑))
+n2RH#((n)/n*(s↑))
+n2RR#((n)/n*(s↑))
+N2HZ#((n<<)s↑(,))
+N2HL#((n<<)s↑(,))
+N2HH#((n<<)s↑(,))#(n<(,)(s↑)) 
+N2HR#(s↑/n*)
+N2HL_S#((s↑ n)s↑)
+n2HL#((n)/n*(s↑))#(((s↑)/n*n n*(n)))
+n2HR#(s↑/n*)
+n2HH#((s↑)/n*(n>>>))
+n3ZZ#(((n s↑ )d n*(d n>>>)))#((s↑)/n*(n>>>))
+n3ZR#((s↑)/n*(n>>>))
+n3ZL#(((n s↑ )d n*(d n>>>)))#((s↑)/n*(n>>>))
+n3ZH#(((d n )d n*(d n>>>)))#((n*//d(,)s↑(n*	)))
+n3RL#((s↑)/n*(n>>>))#((/n*(,)n n*(n)))
+n3LZ#(((n s↑ )d n*(d n>>>)))#((s↑//n*(,)n*<<<(n)))
+n3LL#(((n s↑ )d n*(d n>>>)))#(((d n )d n*(d n>>>)))
+n3LH#((n//d(,)s↑(n)))#(((d n )d n*(d n>>>)))
+n3LR#((n//d(,)s↑(n)))#(((d n )d n*(d n>>>)))
+N3LL#(((d n )d n*(d s↑)))#((n//d(,)s↑(n)))
+N3HL#(((s↑ n< )s↑ n< s↑))
+N3HH#((s↑ n)s↑)
+n3HR#(((n*s↑) n(,) n*(s↑)))#((n)/n*(s↑))
+n3HL#(((n*s↑)d<<<(,)n*(s↑)))#(((d(,) n(,) d)/n* s↑))
+N3RL#(((n*s↑)d<<<(,)n*(s↑)))#(((d(,) n(,) d)/n* s↑))
+n3RL#((n)/n*(s↑))#(((d(,) n(,) d)/n* s↑))
+N4ZH#(((d n )d n*(d n>>>)))#((n*//d(,)s↑(n*)))
+N4ZL#(((s↑)//(n*)//s↑//n(,)*(SA))) #(((s↑)(/n* n n* n n*)s↑))
+N4LH#(((d n )d n*(d n>>>)))#((n*//d(,)s↑(n*)))
+N4LL#(((s↑)/n*>n n*>(n)))#(((d n )d n*(d n>>>)))
+N4LZ#((s↑//n*(,)(s↑>>>) n*))#(((s↑)/n*n n*(n)))
+N4LR#(((s↑)/n*>n n*>(n)))
+N4RL#(((s↑)/n*>n n*>(n)))#(((s↑)(/n* n n* n n*)s↑))
+N4HL#(((s↑)//(n*)///s↑// n(,)*(s))) #(((s↑)/n*>n n*>(n)))
+N4HH#(((s↑)/n*>n n*>(n)))#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+N4HR#(((s↑)/n*>n n*>(n)))
+n4HL#(((s↑/d s↑ n*,,)s↑))#(((s↑)/n*n n*(n)))
+n4HH#(((s↑)/n*n n*(n)))#(((s↑)(/n* n n* n n*)s↑))
+N4RL#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+n4LH#(((d n )d n*(d n>>>)))#((n*//d(,)s↑(n*)))
+n4ZH#(((d n )d n*(d n>>>)))#((n*//d(,)s↑(n*)))
+n4ZL#(((s↑)/n*n n*(n)))#(((s↑)(/n* n n* n n*)s↑))
+n4LL#(((s↑)/n*n n*(n)))#(((s↑)(/n* n n* n n*)s↑))
+n4LZ#((s↑//n*(,)(s↑>>>) n*))#(((s↑)/n*n n*(n)))
+n4LR#(((s↑)/n*n n*(n)))
+n4RL#(((s↑)/n*n n*(n)))#(((s↑)(/n* n n* n n*)s↑))
+n5LL#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+n5HL#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+n5ZL#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+n5RL#((((s↑)/n*,(s↑>>)//n*(n))((s↑>>)/n*(s↑>>)//n*(n))))
+P1LLCGM#p#p>>
+P1LL#p
+P1LRC#p#(,)(p)
+P2LR#p#((,)p(,))
+R1ZZ#(r,)
+R1ZL__S#r
+R1ZL#r
+R1LL_SS#(s r)
+R1LL#r
+R1HL#r#r
+R1HH#r#(//r(g r))
+R1HH#r
+R2LL_D#r
+R2LL_SS#((s)/r(,))
+R2LL#r
+R2LR#r
+R2HL#(r(r r<<))#r
+R2HH#(r(g r))#r
+R3LL_SS#((s r<< r r<<))
+R3LL#r
+R3HL#(r(r r<<))#r
+R3HH#((g//r/((,)r<<<(,))//r))
+R4HL_P#(((g)//r,(r<< r,)))#r
+R4HL_M#(((g) r,(,)(r<< r)))
+R4HL#((r,,(r<< r)))#r
+R4HH#((g/r/((,)g(,))/r))
+R4HR#(((g) r,(,)(r<< r)))
+R4HR_M#(((p)//r,(r<< r,)))#r
+R4HR#r
+29 `;
+
+gmkdata['kamas'] = `D3HZ_S#((s↑)/d(,))
+D3HZ#d
+D3HH_S#((s↑)/d(,))
+D3HH#d
+D3HR_S#((s↑)/d(,))
+D3HR#d
+D4HZ_S#((s↑)/d(,))
+D4HZ#d
+D4HH_S#((s↑)/d(,))
+D4HH#d
+D4HR_S#((s↑)/d(,))
+D4HR#d
+G1LL_S#g
+G1LL#g
+G1HL#(m g<<)
+G2HL#((m g m, ))
+G2HH#((g<<(,)m g(,)))#(g m)
+G2HR#((g<<(,)m g(,)))#(g m)
+G3ZH#((g<<(,)m g(,)))#(g m)
+G3ZR#((g(,)m g(,)))#(g m)
+G3HL#((m g<, m))
+G3HH#((m g<, m))
+G3HR#((m g<, m))
+G4HH#((m g<, m))
+G4HR#((m g<, m))
+M1LL#(m g<<)
+M1LH#(m(g<<m))
+M1HL#((m g<<)m)
+M1HH_D#(d/m)
+M1HH_P#(g p)
+M1HH#m
+M2LH#((m g)m)#m
+M2LR#((m g)m)
+M2HZ#((m g<<<m g<<<))
+M2HL#((m g)m)
+M2HH#((m g)m)
+M2HR#((m g)m)
+M2RZ#((m g<<<m g<<<))
+M2RL#((m g<<<m g<<<))
+M2RH#((m>>> m)m)
+M2RR#((m g<<m,))
+M3ZL#((m g<<<m g<<<))#m
+M3ZH#((m g<<<m g<<<))#m
+M3ZR#((m g<<<m g<<<))#m
+M3LZ#((m g<<<m g<<<))
+M3LL#((m g<<<m g<<<))
+M3LH#((m g<<<m g<<<))
+M3LR#((m g<<<m g<<<))
+M3HZ#((m g<<<m g<<<))
+M3HL#((m g<<<m g<<<))
+M3HH#((m g)m)
+M3HR#((m g<<<m g<<<))
+M3RZ#((m g<<<m g<<<))
+M3RL#((m g<<<m g<<<))
+M3RH#((m>>> m)m)
+M3RR#((m g<<<m g<<<))
+M4ZZ#((m g<<<m g<<<))#m
+M4ZL#((m g<<<m g<<<))#m
+M4ZH#((m g<<<m g<<<))#m
+M4ZR#((m g<<<m g<<<))#m
+M4LZ#((m/(g<<<)//m/(g<<<) m))#(((m/(g(,)<<<)///m(,)/(g(,)<<<)m(,)(g<<<))m))
+M4LL#((m/(g<<<)///m/(g<<<) m))
+M4LH#(((g<<<)//p/m p (g<<)))#((m/(g<<<)//m/(g<<<) m))
+M4LR#((m/(g<<<)//m/(g<<<) m))
+M4HZ#((m/(g<<<)//m(g<<<) m))
+M4HL#((m/(g<<<)//m/(g<<<) m))
+M4HH_D#((d)/m(,))
+M4HH#((m(g<<<)//m(g<<<) m))
+M4HR#((m g<<<m g<<<))
+M4RZ#((m g<<<m,))#(((m g<< m g<<)m,))
+M4RL#((g<<m(g<<) m(,)))
+M5LZ#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5LL#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5LH#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5LR#(((m/(g(,)<<<)//m(,)(g(,)<<<)m(,)(g<<<))m))
+M5HZ#(((m/(g(,)<<<)//m(,)(g(,)<<<)m(,)(g<<<))m))
+M5HL#(((m(g(,)<<<)//m(,)(g(,)<<<)m(,)(g<<<))m))
+M5HH#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5HR#(((m/(g(,)<<<)//m(,)(g(,)<<<)m(,)(g<<<))m))
+M5ZZ#(((m(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5ZH#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5ZL#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5ZR#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5RH#(((m/(g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5RL#((((g<< m/g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5RZ#((((g<< m/g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+M5RR#((((g<< m/g(,)<<<)//m(,)/(g(,)<<<)m(,)(g<<<))m))
+N1LL#n
+N1LR#(d<<n)
+N1HL#(d n)
+N1HH_S#(s↑/n)
+N1HH#n
+N1HR#(d<<n)
+N1RL#((d)n(,))
+N1RH#(d<<n)
+N2LL_P#((p n d n))
+N2LL#((n(,)d n(,)))
+N2LH#(d n)#((d n d n))
+N2LR#(d n)#((d n d n))
+N2HL#(d n)
+N2HH_S#(s↑ n*)
+N2HH#((d n n* n))
+N2HR_S#(s↑/(d n))#(/d n)
+N2HR#((n(,) d(,) n))
+N2RL#((n(,) d(,) n))#n
+N2RH#((n(,) d(,) n))
+N2RR#((n< n n< n))
+N3ZZ#((n< n n< n))
+N3ZL#((s↑ n n< n))#((n< n n< n))
+N3ZH#((s↑ n n< n))#((n< n n< n))
+N3ZR#((s↑ n n< n))#((n< n n< n))
+N3LZ#((n< n n< n))
+N3LL_M#n
+N3LL#((d n> d n>))#n
+N3LH#((d n> d n>))#((d)n(,))
+N3LR#((n< n n< n))
+N3HZ#((d n> d n>))#n
+N3HL#((d n> d n>))#n
+N3HH#((d n> d n>))
+N3HR#((d n> d n>))#((d)n(,))
+N3RZ#((n< n n< n))
+N3RL#((d(,) (n>> d, n>> d)))
+N3RH#((d n> d n>))#((d)n(,))
+N3RR#((d(,) (n>> d, n>> d)))
+N4HZ#(((s↑)n(d)//n,))
+N4HL#(((s↑)n(d)//n,))
+N4HH#(((s↑)n(d)//n,))
+N4HR_R#(((r↑)n(d)//n,))
+N4HR#(((s↑)n(d)//n,))
+N4RL#((d(,)(n>>d, n>>d)))
+N4RH#((d(,)(n>>d, n>>d)))
+N4RR#((d(,)(n>>d, n>>d)))
+R1HL#(r//g/)#r
+R2HL#(r//g/)#r
+28`;
+
+gmkdata['sahana'] = `D1LL_R#d
+D1LL#d
+D1HL#d
+D1HZ#d
+D2HZ_S#d#d
+D2HZ#d
+D2HL_S#d#d
+D2HL#d
+D2HH_S#d#d
+D2HH#d
+D2HR_S#d#d
+D2HR#d
+D3LZ#d
+D3LL#d
+D3LH#d
+D3LR#d
+D3HZ_S#d#d
+D3HZ#d
+D3HL_S#d#d
+D3HL#d
+D3HH_S#d#d
+D3HH#d
+D3HR_S#d#d
+D3HR#d
+D4LZ_M#d#((m)//d(,))
+D4LZ#m
+D4LL_M#d#((m)//d(,))
+D4LL#d
+D4LH_M#d#((m)//d(,))
+D4LH#d
+D4LR_M#d#((m)//d(,))
+D4LR#d
+D4HZ_S#((s↑)/d(,))#d
+D4HZ#d
+D4HL_S#((s↑)/d(,))#d
+D4HL#d
+D4HH_S#((s↑)/d(,))#d
+D4hh#d
+D4HR_S#((s↑)/d(,))#d
+D4HR#d
+G1LL#((r)//g>>/(r))#((g(,) g<< g(,)))
+G1LH#g<<#((//m/g<<,//m))
+G1HH#g#((m/g,//m))
+G1HR#((m(,)/g(,)//m))#(m/g)
+G1RL#(m/g)
+G1RH#((m(,)/g(,)m))#(g//m)
+G2LL__R#((r g//r,))
+G2LL#((r g(,)//r(,)))#((r//g, r))
+G2LH#((m(,)//g<<<////m(,)))#((g<< //m)//g<<)
+G2HH#((g<<////m)//g<<)#(m//g<<)
+G2HR#((m(,)//g<< ////m(,)))#(m//g<<)
+G2RZ#((m(,)//g<<////m(,)))#(m//g<<)
+G2RL#((m(,)//g<<////m(,)))#(m//g<<)
+G2RH#((m(,)//g<<////m(,)))#(m//g<<)
+G2RR#((m(,)//g<<////m(,)))#(m//g<<)
+G3LL#(((g<<<(,))g,(,)((,)g<<<)))
+G3LH#(((m/g<<)////m//g<////m))
+G3HH#(((m//g<<)////m g<<////m))
+G3HR#(((m/g<<)////m//(g<<)////m(,)))
+G4ZH#(((m>/g<<)////m>//g<<////m>))
+G4LH#(((m>/g<<)////m>//g<<////m>))
+G4HZE#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,,//)))
+G4HZA#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,,//)))
+G4HZ#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,//r)))
+G4HLE#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,,//)))
+G4HLA#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,,//)))
+G4HL#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,//r)))
+G4HH#(((m//g<<)////m(//g<<)////m(,)))
+G4HR#(((m//g<<)////m(//g<<)////m(,)))
+G4RZ#(((m//g<<)////m(//g<<)////m(,)))
+G4RL#(((m//g<<)////m(//g<<)////m(,)))
+G4RH#(((m//g<<)////m(//g<<)////m(,)))
+G4RR#(((m//g<<)////m(//g<<)////m(,)))
+G5HZ#((((g<<)////m(,)((//g<<))////m,((,)//g<<)//m,//r)))
+M1HL_P#m
+M1HL#m
+M1HH__P#m//
+M1HH#m
+M2HL_P#m
+M2HL#m
+M3LL__R#(((m//g<<)////m,(,)/(r)))#(((m//g<<<)////m, ,))
+M3LL#(((m//g<)////m, ,))
+M3LH#(((m//g<)////m, ,))
+M3HL#m#((/(m(,)(g<<m g<<))m,(,)))
+M4LL__R#(((m//g<<)////m,(,)/(r)))#(((m//g<<<)////m, ,))
+M4LL#(((m//g<)////m, ,))
+M4HZ#(((g)////m,,(,)))
+M4HL#(((m(,)//(g<<(,)////m(,)))m,(,)))
+M4HH#(((m(,)//(g<<(,)////m(,)))m,(,)))
+M4HR#(((g<<)////m,,(,)))
+N1ZL#(d n)
+N1ZH#((d////s↑,//d))#(d n)
+N1ZR#((d////s↑,//d))#(d n)
+N1LL#((n d n,))#n>>
+N1LH#((d//s↑)//d<<)#(//s↑//d<<)
+N1LR#(d(,)//(s↑))
+N1HL#(d n)#(d//s↑)
+N1HHE#(d//s↑)
+N1HH#d//#((/d////s↑,//d//))
+N1HR#(d//s↑)
+N1RH#(d(,)//(s↑))
+N2ZH#((d//s↑//d,))
+N2ZR#(d(,)//(s↑))
+N2LL#((d n>>d n>>))#((n>>(,)d(,)n>>))
+N2LH#((d s↑)/d<<)#(//s↑//d<<)
+N2LR#(d//(s↑/d))
+N2HL#((d n>d n>))
+N2HH#((d(,)n<<<d(,)//))#((d(,) s↑//d(,)))
+N2HR#((d n>d n>))
+N2RZ#((d n>d n>))
+N2RL#((d n>d n>))
+N2RH#((d//n<<<(,)//d(,)))#(d<<(,)//(s↑))
+N3ZR#(d//(s↑//d))#(((d, s↑)//d(s↑//d,)))
+N3LL_R#((n(,)(d) n(,)(d)))
+N3LL#((n(,)(d) n(,)(d)))
+N3LH#((d s↑/d//s↑))#((d s↑/d,))
+N3LR#(d//(s↑/d))#(((d, s↑)//d(s↑/d,)))
+N3HL#(((s↑)/d//n>>(d n(,)(s↑))))
+N3HH#((s↑,/(d////s↑//d,////)))
+N3RH#(d//(s↑/d))#(d<<(,)//(s↑))
+N4ZH#(((d//(s↑)/d(,))d//(s↑)/d))#(((d s↑//d,(,)(s↑)/d(,)(s↑/)d)))
+N4ZR#(((d//(s↑)/d(,))d//(s↑)/d))#(((d s↑//d,(,)(s↑)/d(,)(s↑)/d)))
+N4LZ#((d//(s↑/d)d//(s↑/d)))#(((d s↑//d,(,)(s↑)/d(,)(s↑)/d)))
+N4LL#((n(,)(d) n(,)(d)))
+N4LH#((d//(s↑/d)d//(s↑/d)))#(((d s↑//d,(,)(s↑)/d(,)(s↑)/d)))
+N4LR#((d//(s↑/d)d//(s↑/d)))#(((d s↑//d,(,)(s↑)/d(,)(s↑)/d)))
+N4HL#(((s↑)/d//n>>(d n(,)(s↑))))
+N4HH#((s↑,/(d////s↑//d,////)))
+N4HR#((s↑,/(d////s↑//d,////)))
+N4RH#(d//(s↑/d))#(d<<(,)//(s↑))
+P2ZL__M#((p,,(,)(d)))#p
+P2ZL#p
+P3ZL__M#((p,,(,)(d)))#p
+P3ZL#p
+P3LL__M#((p,,(,)(d)))#p
+P3LL#p
+P3HL__M#((p,,(,)((,)(d))))#p
+P3HL#p
+P3HH_S#((s↑// p,,))#(((s↑)//p,,(,)))
+P3HH#p
+P4HL_S#((s↑// p,,))#(((s↑)//p,,(,)))
+P4HL#p
+P4HH_S#((s↑// p,,))#(((s↑)//p,,(,)))
+P4HH#p
+P4ZL__M#((p,,(,)((,)(d))))#p
+P4ZL#p
+P4LL__M#((p,,(,)((,)(d))))#p
+P4LL#p
+P4HL__M#((p,,(,)((,)(d))))#p
+P4HL#p
+R1HL#r
+R1HH_P#r
+R1HH#r
+R1HR#r
+R1RZ#((r g>> r,))
+R1RL#r
+R1RH__D#r
+R1RH#((r g>> r,))
+R1RR#((r g>> r,))
+R1RR#r
+R2ZZ#((r g>> r,))
+R2ZL#r
+R2ZH#((r g>> r,))
+R2ZR#((r g>> r,))
+R2LZ#((r g>> r,))
+R2LL#((r<<(,)r(,)r<<))
+R2LH#(r((g>>)r(,)))
+R2LR#((r g>> r,))
+R2HZ#r
+R2HL#r
+R2HH_P#r
+R2HH#r
+R2HR#r
+R2RZ#((r g>> r,))
+R2RL#r
+R2RH#r
+R2RR#((r r<<)r)#((r g>> r,))
+R3ZZ#((r g>> r,))
+R3ZL#r#(((g))r(,)((,)))
+R3ZH#(((r g>)(,)/r,(,)))#(((r g>)//r//g>/r))
+R3ZR#(((r g>)//r(,)//(g>)/r))#(((r g>)(,)/r,(,)))
+R3LZ#((r g>> r,))
+R3LL#r
+R3LH#(((r)////g>>/r<<r(,)))#(((r g)(,)/r,(,)))
+R3LR#(((r)////g>>/r<<r(,)))
+R3HL#r
+R3HR_M#((m)/r(,))
+R3HH_G#((r r<< r,))#(((r g)(,)/r,(,)))
+R3HH_M#((m)/r(,))
+R3HH_P#((p)//r(,))
+R3HH#r
+R3HZ_M#((m)/r(,))
+R3HZ_G#((m)/r(,))
+R3HZ_P#((p)//r(,))
+R3HZ#r
+R3RZ#(((r)g/r g (r)))
+R3RL#(((r)g/r g (r)))
+R3RH#(((r)g>>/r g>> (r)))
+R3RR#((r r<<)r)#(((r g>)(,)/r,(,)))
+R4ZZ#(((r g>)//r,//(g>/r)))#(((r g>)(,)/r,(,)))
+R4ZL#(((r g>)(,)/r,(,)))
+R4ZH#(((r g>)//r(,)//(g>/r,)))#(((r g>)/r(,)(g>>r)(,)))
+R4ZR#(((r g>>)(,)/r,(,)))#(((r g>>)//r,//(g>>/r)))
+R4LZ#(((r g>)//r,//(g>/r)))#(((r g>>)(,)/r,(,)))
+R4LL#(((r g>)//r(,)//(g>/r,)))#(((r g>>)(,)/r,(,)))
+R4LH#(((r g>)//r(,)//(g>/r,)))#(((r g>>)(,)/r,(,)))
+R4LR#((r<)r(,))#(((r//g>>))/r(,))
+R4HZ#r
+R4HL#r
+R4HH_G#((r (r<<<)r(r<<<) r ))
+R4HH_M#((m)/r(,))
+R4HH_P#((p)//r(,))
+R4HH#r
+R4HZ_M#((m)/r(,))
+R4HZ_G#((m)/r(,))
+R4HZ_P#((p)//r(,))
+R4HZ#r
+R4HR_G#((m)//r(,))
+R4HR_M#((m)//r(,))
+R4HR#r
+R4RZ#(((r g>)(,)//r,(,)))
+R4RL#(((r g>)(,)//r,(,)))
+R4RH#(((r g>)//r(r<<)r(,)))
+R4RR#(((r g>)//r(r<<)r(,)))
+28`;
+
+gmkdata['sankara'] = `D1ZL#((d<< d(,) d<<(,)))
+D1ZH#((d<< d(,) d<<(,)))
+D1ZR#((d<< d(,) d<<(,)))
+D1LZ#((d<< d(,) d<<(,)))
+D1LL_P#((p d<<d d<<))#((d<<(,) d(,) d<<))
+D1LL#d#((d<< d(,) d<<(,)))
+D1LH#((s↑)d(,))
+D1LR#((s↑)d(,))
+D1HZ#((d<< d(,) d<<(,)))
+D1HL#(d(d<< d))#d
+D1HH#((d(,)d<<<d(,)))
+D1HR#(d(d<< d))
+D1RZ#(d(d<< d))
+D1RL#(d(d<< d))
+D1RH#(d<<d)#((s↑)d(,))
+D2ZZ#((d<< d(,) d<<(,)))
+D2ZL#((d<< d(,) d<<(,)))
+D2ZH#((s↑ d(,) d<<(,)))#((d<< d(,)d<<(,)))
+D2ZR#((d n)d)#((d<< d(,) d<<(,)))
+D2LZ#((d<< d(,) d<<(,)))
+D2LL_P#(((p)/d<<d(,) d<<))
+D2LL#((d< d(,) d<(,)))
+D2LH#(n d)
+D2LR#((d<< d(,) d<<(,)))
+D2HZ#(d(d<< d))
+D2HL#(d d<<<)#(d(d<< d))
+D2HHBS#(s↑ d)
+D2HH_S#(d/(n d))
+D2HH_N#(d/(n d))#(d(d<<d))
+D2HH#(d/(n d))
+D2HR#(s↑ (d<<(d d<<)))
+D2RZ#((d<< d(,) d<<(,)))
+D2RL#((d<< d(,) d<<(,)))
+D2RH#(((d n))d(,))
+D2RR#((d<< d(,) d<<(,)))
+D3ZZ#((d<< d d<<d))
+D3ZL#((d<< d d<<d))
+D3ZH#(n (d<< d))
+D3ZR#((d<< d d<<d))
+D3LZ#((d<< d d<<d))
+D3LL_P#((d<< d d<<d))#(((p(,)(d<<))d(,)(d<<) d))
+D3LL#((d<< d d<<d))
+D3LH#(((p//s↑) d(n)d(,)))#((n d<< d d<<))
+D3LR#((d<< d d<<d ))
+D3HZ#((d d<< d d<< ))
+D3HL#((d d<< d d<< ))
+D3HH#((d d<< d d<< ))
+D3HR#((d d<< d d<< ))
+D3RZ#((d<< d(,) d<<(,)))
+D3RL#((d<< d(,) d<<(,)))
+D3RH#(((d d<<<))d(,))
+D3RR#((d<< d(,) d<<(,)))
+D4ZL#(((p /n d d<<) d d<<))#(((n d) d<< d d<<))
+D4ZR#(((p n )d<< d d<<))
+D4LZ#((d<< d d<<d))
+D4LLA#(((p /n d d<<) d d<<))#(((n d) d<< d d<<))
+D4LL__P#(((p /n d d<<) d (d<< n)))
+D4LL#((d<< d d<<d))
+D4LH#(((p /n, d n>>>,)d<<))#((n  d<< d d<<))
+D4LR#(((p /n d, d<<< d, d<<<)))
+D4HZ#((d d<< d d<< ))
+D4HLEP#((d<< d d<<(d n)))
+D4HL#((d d<< d d<< ))
+D4HH#((d d<< d d<< ))
+D4HR#((d d<< d (d n)))
+D4RZ#((d<< d(,) d<<(,)))
+D4RL#((d<< d(,) d<<(,)))
+D4RH#(((d n))d(,))
+D4RR#((d<< d(,) d<<(,)))
+G1LL_P#g
+G1LL_D#g
+G1LL_S#g
+G1LL#g
+G2LL_P#g
+G2LL_D#g
+G2LL_S#g
+G2LL#g
+G2HZ_P#((p)g(,))
+G2HZ#g
+G2HL_P#((p)g(,))
+G2HL#g
+G2HH_P#((p)g(,))
+G2HH#g
+G3LH__M#g#((g, ,///m))
+G3LH#g
+G3HL__R#g#(g(,)((,)(m)))
+G3HL#g
+G4ZH__M#g#((g, ,///m))
+G4ZH#g
+G4LH__M#g#((g, ,///m))
+G4LH#g
+G4HL#g#(g(,)((,)(m)))
+G4HH__M#g/#g
+G4HH#g
+G4RZ#g#(((g>>>))g((,))(,))
+G4RL#g#(((g>>>))g((,))(,))
+G4RH__M#g//#g
+G4RH#g//#(((g>>>))g((,))(,))//
+G4RR#g#(((g>>>))g((,))(,))
+M1ZZ#m#((m(,) g<< m(,)))
+M1ZL#m#((m(,) g<< m(,)))
+M1ZH#m#((g p)m)
+M1ZR#m#((m(,) g<< m(,)))
+M1LZ#m#((m(,) g<< m(,)))
+M1LL_GR#m#((g<<<) m(,))
+M1LL#m#((m(,) g<< m(,)))
+M1LR#((m(,) g<< m(,)))#m
+M1LH#((m(,) g<<m(,)))#m
+M1HZ#((m(,) g<< m(,)))#m
+M1HL#m#((p g m g))
+M1HHCPP#(,g<<)/#(g<< (p g))
+M1HH#(g<< m)#((g p)m)
+M1HR#(g<<m)
+M1RZ#m#(g<<m)
+M1RL#m#(g<<m)
+M1RH#m#((g p)m)
+M1RR#m#(g<<m)
+M2ZZ#((m(,) g<< m(,)))#m
+M2ZL#((m(,)g<< m(,)))
+M2ZH#((m(,)g<< m(,)))#((g/p(,)m(,)))
+M2ZR#((m m>>)m)
+M2LZ#((m(,)g<<m(,)))
+M2LL#((m g<<)m)#m
+M2LH#(((g<<)/p(,)(g<<)m(,)))#((m(,)g<<m(p)))
+M2LR#((m g<<) m)
+M2HZ#((g/p(,)m(,)))#((m(,)g m(,)))
+M2HL__G#((g<<m) m)
+M2HL_P#((g<<m) m)#((m(,)g m(,)))
+M2HL_PR#((g<<m(,) g(,)))
+M2HL#(g<<m) m)
+M2HHB#((g<< m, g<<))
+M2HH_S#((s↑/g/pm))#((m(,)g<< m(,)))
+M2HH_N#((m g<< m g<<))
+M2HH_D#((dg/pm))#((dg<<m g<<))
+M2HH#((pg/p,))#((g<< m, g<<))
+M2HR#((m(,)g<< m(,)))
+M2RZ#((m g<<)m)
+M2RL#((m g<<)m)
+M2RH#(((g<<)/p,(g<<)m))
+M2RR#((m g<<)m)
+M3ZZ#((m(g<<) m (g<) m))#(((m(,) g(,)<</ m))m)
+M3ZL#((m(g<<) m (g<) m))#((m g<<)m)
+M3ZH#((m(g<<) m (g<) m))
+M3ZR#((m(g<<) m (g<) m))
+M3LZ#((m(g<<)m,(,)))#((g/pg<<(m/p)))
+M3LL#((m g<< m,))#(((m(,) g(,)<</ m))m)
+M3LH#((g/p(,)(g<</m p)))#((g/p(,)(g<</p m)))
+M3LR#(((m(,) g(,)<</ m))m)#(((m g<<) m g<< m))
+M3HZ#((p(,)(g p, g m)))
+M3HL#((m(,)/(g<<))m)#(((m g<<)m g<< m))
+M3HH_S#((s↑/g/pm))#((m(,)g m(,)))
+M3HH_N#((m/p(,)m(,)))
+M3HH_D#((dg/pm))#((dg<<m g<<))
+M3HH#(((m) g(,))<m)#((g//p,/m))
+M3HR#(((m(,) g(,)<</ m))m)#(((m g<<) m g<< m))
+M3RZ#(((m g<<) m g<< m))
+M3RL#(((m g<<) m g<< m))
+M3RH__D#(((m g<<) m g<< m))
+M3RH#((g/pg<</(p m)))#(((m g<<) m g<< m))
+M3RR#((m(m>)m(g<<)m))#(((m g<<) m g<< m))
+M4ZZ#((m(m>)m(g<<)m))#((m(g<<) m (g<) m))
+M4ZL#((m(m>)m(g<<)m))#((m(g<<) m (g<) m))
+M4ZH#((g/pg<</(p m)))#((m(g<<) m (g<) m))
+M4ZR#((g/pg<</(p m)))
+M4LZ#((m(g<<) m (g<<)m))
+M4LL#((m(g<<) m(g<<)m))
+M4LH#((g/p(,)(g<</p m)))#((g/p(,)((g<<)/p(,) m)))
+M4LR#((m(m>)m(g<<)m))#(((m g<<) m g<< m))
+M4HZ#((p(,)(g p, g m)))#(((p m g<<) m (g<<) m))
+M4HL#(((p m g<<<) m (g<<<) m))#((p(,)(g p, g m)))
+M4HH__D#((m(g<<) m (g<<) m))
+M4HH_N#(((n/m g<<)m(g<< m g<<)))
+M4HH__N#((m(g<<) m (g<<) m))
+M4HH#(((p m g<<) m (g<<) m))#((p(g<<)p(g<<)p))
+M4HR#(((p m g<<) m (g<<) m))
+M4RZ#((g/pg<</(p m)))
+M4RL#((m(g<<) m (g<<) m))
+M4RH__D#((m(g<<) m (g<<) m))#((g<m g<< m))
+M4RH#((g/pg<</(p m)))#((m(g<<) m (g<<) m))
+M4RR#((m(g<<) m (g<<) m))
+M5LL#((((g)/m(,)g/m(,)g/ m(,)(g m))))
+N0LH#(s↑ n<)
+N0HL#(n<s↑)
+N1ZZ#((n(,)s↑ n(,)))
+N1ZL#((s↑ n(,)s↑(,)))
+N1ZH#(s↑ n)
+N1ZR#((s↑ n(,)s↑(,)))
+N1LZ#((n(,)s↑ n(,)))
+N1LL#((d s↑) n<<)
+N1LH#((d s↑) n<<)
+N1LR#((s↑ n(,)s↑(,)))
+N1HZ#(n< s↑)
+N1HL#(s↑ (n<s↑))
+N1HH#(n< s↑)
+N1HR#((n(,)s↑ n(,)))
+N1RZ#((n(,)s↑ n(,)))
+N1RL#((n(,)s↑ n(,)))
+N1RH#(s↑ n<)
+N1RR#((n(,)s↑ n(,)))
+N2ZZ#((n<<< n<(,) n<<<(,)))
+N2ZL#((n<<< n<(,) n<<<(,)))
+N2ZH#((n<<< n<(,) n<<<(,)))
+N2ZR#((n<<< n<(,) n<<<(,)))
+N2LZ#(s↑ (n<s↑))
+N2LL#(s↑ (n<s↑))
+N2LH#(s↑ (n<s↑))
+N2LR#((n<<< n<(,) n<<<(,)))
+N2HZ#(n<<(s↑ n<<))
+N2HL#(s↑ (n<s↑))
+N2HH#(s↑ (n<s↑))
+N2HR#(s↑ (n<s↑))
+N2RZ#((n<<< n<(,) n<<<(,)))
+N2RL#((n<<< n<(,) n<<<(,)))
+N2RH#((s↑ n<<, s↑))
+N2RR#((n<<< n<(,) n<<<(,)))
+N3ZZ#((n<<< n< n<<< n<))
+N3ZL#((n<<< n< n<<< n<))
+N3ZH#((n<<< n< n<<< n<))
+N3ZR#((n<<< n< n<<< n<))
+N3LZ#((n<<< n< n<<< n<))
+N3LL#((s↑ n< n<<< n<))
+N3LH#((s↑ n< n<<< n<))
+N3LR#((s↑ n< n<<< n<))
+N3HZ#((s↑ n< n<<< n<))
+N3HL#((s↑ n< n<<< n<))
+N3HH#((s↑ n< n<<< n<))
+N3HR#((s↑ n< n<<< n<))
+N3RZ#((n<<< n< n<<< n<))
+N3RL#((n<<< n< n<<< n<))
+N3RH#((n<<< n< n<<< n<))
+N3RR#((n<<< n< n<<< n<))
+N4ZZ#((s↑ n< n<<< n<))
+N4ZL#((s↑  n< n<<< n<))
+N4ZH#((s↑ n< n<<< n<))
+N4ZR#((s↑  n< n<<< n<))
+N4LZ#((s↑(,)(n<) s↑(,)(n<<)))#((s↑(,)(n<) s↑ n<))
+N4LL#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4LH#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4LR#((s↑(,)(n<) s↑ n<))
+N4HZ#((s↑(,)(n<) s↑(,)(n<<)))#((s↑(,)(n<) s↑ n<))
+N4HL#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(n<<s↑)))
+N4HH#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4HR#((s↑,(,)(n<< )s↑))#((s↑, n<< s↑))
+N4RZ#((n<<< n< n<<< n<))
+N4RL#((n<<< n< n<<< n<))
+N4RH#((n<<< n< n<<< n<))
+N4RR#((n<<< n< n<<< n<))
+P1LL_S#(s/p)
+P1LL#p
+P1LR_D#((p>>>)p(,))
+P1LR#p
+P2HL_N#(((d p>>>)p,,))
+P2HL_S#(((d p>>>)p,,))
+P2HL#p
+P2HH_N#(((d p>>>)p,,))
+P2HH#p
+P2HR_N#(((d p>>>)p,,))
+P2HR#p
+P2HL_D#(((d p>>>)p,,))
+P2HL#p
+P3HR_N#(((d p>>>)p,,))
+P3HR_S#(((d p>>>)p,,))
+P3HR#p
+P3HZ_N#(((d p>>>)p,,))
+P3HZ#p
+P3HL_N#(((d p>>>)p,,))
+P3HL_S#(((d p>>>)p,,))
+P3HL#p
+P3HH_N#(((d p>>>)p,,))
+P3HH#p
+P4HL_N#(((d p>>>)p,,))
+P4HL_S#(((d p>>>)p,,))
+P4HL_D#(((d p>>>)p,,))
+P4HL#p
+P4HH_N#(((d p>>>)p,,))
+P4HH#p
+P4HR_N#(((d p>>>)p,,))
+P4HR#p
+P4HZ_N#(((d p>>>)p,,))
+P4HZ#p
+P4HR_S#(((d p>>>)p,,))
+P4HR#p
+R1ZZ#((r(,)r<<r(,)))#r
+R1ZL#((r(,)r<<r(,)))#r
+R1ZH#((r g)r)#r
+R1ZR#((r(,)r<<r(,)))#r
+R1LZ#((s)r(,))
+R1LL#((r<<)r(r<<))
+R1LH#((g)r(,))
+R1LR#((g)r(,))
+R1HZ#((r(,) r<< r(,)))
+R1HL_P#(g/r)
+R1HL#(r (r<<< r))
+R1HH_P#(g/r)
+R1HH#((r(,) r<< r(,)))
+R1HR#((r(,) r<< r(,)))
+R1RZ#((r(,) r<< r(,)))
+R1RL#(r (r<<< r))
+R1RH#((g) r(,))
+R1RR#(r (r<<< r))
+R2ZZ#((r(,)r<<r(,)))
+R2ZL#((r(,)r<<r(,)))
+R2ZH#((r g)r)
+R2ZR#((r(,)r<<r(,)))
+R2LZ#((r(,)r<<r(,)))
+R2LLA#((r<<(,)r r<<(,)))#(((g r)(,)r<<(,) r))
+R2LL#((r<<(,)r r<<(,)))
+R2LH#((s g)r)
+R2LR#((s g)r)
+R2HZC#(r(r<< r))
+R2HZ_M#((m r r<<<r))
+R2HZ#(r (r<< r))
+R2HLC#(r(r<<<r))#(((r)/g(,) r r<<))
+R2HL_M#((m r r<<<r))
+R2HL_PS#((g)r(,))
+R2HL#(r(r<<<r))#(((r)/g(,) r r<<))
+R2HH_M#((m)r(r<<))
+R2HH#((g)r(r<<))
+R2HR_M#((m)r(r<<))
+R2HR#((g)r(r<<))
+R2RZ#((r<<)r(,))
+R2RL#((r g)r)#((r<<)r(,))
+R2RH#((r<<)r(,))
+R2RR#((r g)r)#((r<<)r(,))
+R3ZZ#(((s g) r r<<<r))#((r<<(,)r r<<(,)))
+R3ZL#((r<<(,)r r<<(,)))
+R3ZH#(((s g) r r<<<r))
+R3ZR#(((s g) r r<<<r))
+R3LZ#(((s g) r r<<<r))
+R3LL#(((r r<<<) r r<<<r))#(((s g) r r<<<r))
+R3LH#(((s g) r r<<<r))#(((s r<<<) r r<<<r))
+R3LR#(((s g) r r<<<r))
+R3HZE#((r//(g)r( g)r))
+R3HZC#((r<<(,)r r<<(,)))
+R3HZ#((r<<(,)r r<<(,)))
+R3HLC#((r(g)r r<< (r)))#((r(,)g*r (r<<)))
+R3HLE#((r,(g)r(,)))
+R3HL_PS#((g)r(,))#((g)(r, r<<))
+R3HL#((r(g)r r<< (r)))#((r(,)g*r (r<<)))
+R3HHC#((r r<<< r,))#((r(r<< r)(g r)r))
+R3HH#((r r<<< r,))#((r(r<< r)(g r)r))
+R3HRC#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3HR#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3RZ#((r<<(,)r r<<(,)))
+R3RL#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3RH#((r(r<<)r(r<<)r))#((r(r<< r)(g r)r))
+R3RR#((r<<(,)r r<<(,)))
+R4ZZ#((r<<(,)r r<<(,)))
+R4ZL#((r<<(,)r r<<(,)))
+R4ZH#(((s g) r r<<<r))
+R4ZR#((r<<(,)r r<<(,)))
+R4LZ#((s(g) r r<<<(r)))
+R4LL#(((s r<<<) r r<<<r))#(((s g) r r<<<r))
+R4LH#((s(g) r r<<<(r)))	#(((s r<<<) r r<<<r))
+R4LR#(((s g) r r<<<r))#(((s r<<<) r r<<<r))
+R4HZE#((r//(g)r( g)r))#((r//(g r g)r(,)))
+R4HZ#((r r<<< r r<<<))
+R4HLC#((r//(g)r(g)r))#((r g(r)r<<(r)))
+R4HLE#((r//(g)r( g)r))#((r g(r)r<<(r)))
+R4HL_PS#((g)r(,))
+R4HL#((r r<<< r r<<<))#((r g(r)r<<(r)))
+R4HHC#((r(g r) r<< r))
+R4HH#((r(g r) r<< r))
+R4HRC#((r r<<< r r<<<))
+R4HR#((r r<<< r r<<<))
+R4RZ#((r(r<<)r(r<<)r))
+R4RL#((r(,)(r<<)r(,)(r<<)))
+R4RH#((r(r<<)r(r<<)r))
+R4RR#((r(r<<)r(r<<)r))
+R5LH#(((s g r r<<<r r r<<< r)))
+S1HZ_G#(g/s)#s
+S1HZ#s
+S1HL_G#(g/s)#s
+S1HL#s
+S1HR_G#(g/s)#s
+S1HR#s
+S1HH_G#(g/s)#s
+S1HH#s
+S2HH_G#(g/s)#s
+S2HH#s
+S2HL_G#(g/s)#s
+S2HL#s
+S2HZ_G#(g/s)#s
+S2HZ#s
+S2HR_G#(g/s)#s
+S2HR#s
+S3HL_G#(g/s)#s
+S3HL#s
+S3HR_G#(g/s)#s
+S3HR#s
+S3HH_G#(g/s)#s
+S3HH#s
+S3HZ_G#(g/s)#s
+S3HZ#s
+S3LL_P_2#((p↓)//s(,))#(((p↓))/s(,)((,)))#s
+S3LL_P_1#((p↓)//s(,))#(((p↓))/s(,)((,)))#s
+S3LL#s
+S3LR_P_2#((p↓)//s(,))#(((p↓))/s(,)((,)))#s
+S3LR_P_1#((p↓)//s(,))#(((p↓))/s(,)((,)))#s
+S3LR#s
+S3ZL_S_2#(((p↓))/s(,)((,)))#s
+S3ZL_S_1#(((p↓))/s(,)((,)))#s
+S3ZL#s
+S3LH_P_2#(((p↓))/s(,)((,)))#s
+S3LH_P_1#(((p↓))/s(,)((,)))#s
+S3LH#s
+S3LZ___2#(((p↓))/s(,)((,)))#s
+S3LZ___1#(((p↓))/s(,)((,)))#s
+S3LZ#s
+S4HL_G#((g)/s(,))#s
+S4HL#s
+S4HR_G#((g)/s(,))#s
+S4HR#s
+S4HH_G#((g)/s(,))#s
+S4HH#s
+S4HZ_G#((g)/s(,))#s
+S4HZ#s
+S4LL_P_2#((p↓)//s(,))#s
+S4LL_P_1#((p↓)//s(,))#s
+S4LL#s
+S4LR___2#((p↓)//s(,))
+S4LR___1#((p↓)//s(,))#s
+S4LR#s
+S4LL_P_2#((p↓)//s(,))#s
+S4LL#s
+S4ZL_S_2#((p↓)//s(,))#s
+S4ZL#s
+S4LH___2#((p↓)//s(,))#s
+S4LH#s
+S4LZ___2#((p↓)//s(,))#s
+S4LZ#s
+29`;
+
+gmkdata['kalyani'] = `D1ZL#d
+D1ZH#d
+D1ZR#d
+D1LZ#d
+D1LL_G#((g/d  d<< d))
+D1LL#d#((d d<<<)d)
+D1LH#((d n)//d)#((d d<<<)d)
+D1LR#d#((d d<<<)d)
+D1HZ#d
+D1HL#d
+D1HH#d
+D1HR#d
+D1RZ#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RL#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RH#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RR#((d>>)d(,))# (((d>>>))d((,))(,))
+D2ZZ#((d<< d d<<,))#d
+D2ZL#((d n)/d)#((d<< d d<<,))
+D2ZH#((d n)/d)
+D2ZR#d#((d n)/d)
+D2LZ#((n)/d(,))#d
+D2LL_G#((g d  d<< d))
+D2LL#((d<< d d<<,))#(n d)
+D2LH#((p/n/d,))#((d n)/d)
+D2LR#((d<<d(,) d(,)<<))#((p/n)d)
+D2HZ_S#((n s↑)/d)
+D2HZ#d
+D2HL#d#((s↑)/d(,))
+D2HL_N#(d(,)(d<<))#d
+D2HL_S#((n s↑)/d)
+D2HL#d
+D2HH_S#((n s↑)/d)
+D2HH#d
+D2HR_S#((n s↑)/d)
+D2HR#d
+D2RZ#(((d>>>))d((,))(,))
+D2RL#(((d>>>))d((,))(,))
+D2RH#(((d>>>))d((,))(,))
+D2RR#(((d>>>))d((,))(,))
+D3ZZ#((d d<<< d d<<))#d
+D3ZL#(((p/n)/d d<<d))#((d d<<< d d<<))
+D3ZH#((d/n)/d)#((d d<<< d d<<))
+D3ZR#((d d<<< d d<<))#d
+D3LZ#((n)d(,))
+D3LL_P#((p(,)/(n/d d<<)d))
+D3LL_R#(((r)/d<<d(,) d<<))
+D3LL#(((p/n)/d d<<d))#((d d<< d,))
+D3LH#(((d n)/d d<<d))#((d n)/d)
+D3LR#(((d n)/d d<<d))#((d d<<<)/d)
+D3HZ_S#((n s↑)/d)
+D3HZ#((d d<<<)d)#d
+D3HL_S#((n s↑)/d)
+D3HL_N#(((n s↑))/d(,))
+D3HL#((s↑)/d(,))#d
+D3HH_S#((n s↑)/d)
+D3HH#(d(d<< d))#d
+D3HR_S#((n s↑)/d)
+D3HR#((d d<<< d d<<))#d
+D3RZ#((((d>>>)))d(((,))(,))(,))
+D3RL#((((d>>>)))d(((,))(,))(,))
+D3RH#((((d>>>)))d(((,))(,))(,))
+D3RR#((((d>>>)))d(((,))(,))(,))
+D4ZZ#((s↑/(d d<<)d(,)(d<<)))#((d(,)(d<<)d(,)(d<<)))
+D4ZL#((s↑/(d d<<)d(,)(d<<)))#((d(,)(d<<)d(,)(d<<)))
+D4ZH#d#((d(,)(d<<)d(,)(d<<)))
+D4ZR#((n)d(,))#(((n)d(d<<)d(,)(d<<)))
+D4LZ#(((n)d(d<<)d(,)(d<<)))#((d(,)(d<<)d(,)(d<<)))
+D4LL#(((d,(,) d<< d,(,)  d<< d)))#(d(,)((,)(d<<)))
+D4LH#((p/n>>/d(d<<d)))#((n/d(d<<d),))
+D4LR#((p/(n/d d<<)d(d<<)))#((d(,)(d<<)d(,)(d<<)))
+D4HZ_S#(((n)s↑(,))/d)
+D4HZ#(((d(,)(d<<) d(,)(d<<)))#((d d<<d d<<))
+D4HL_SP#(((n<)s↑(,))/d)
+D4HL_NP#(((n<)s↑(,))/d)
+D4HL#((d d<<d d<<))
+D4HH_SN#(((n<)s↑(,))/d)
+D4HH#((d d<<d d<<))
+D4HR_S#(((n<)s↑(,))/d)
+D4HR#((d d<<d d<<))
+D4RZ#((((d>>>)))d(((,))(,))(,))
+D4RL#((((d>>>)))d(((,))(,))(,))
+D4RH#((((d>>>)))d(((,))(,))(,))
+D4RR#((((d>>>)))d(((,))(,))(,))
+G1LZ#g
+G1LL__R#(g r)#g
+G1LLBR#g
+G1LLBS#g
+G1LLBN#g
+G1LL_D#(d↓(g r))#(g(,)(g<<<))
+G1LL#g
+G1LH#g#(g (g<< g))
+G1LR#g#(g (g<< g))
+G1HZ#g#(g (g<< g))
+G1HL#g#(g g<<)
+G1HH#g#(g (g<<g))
+G1HR#g#(g (g<<g))
+G1RZ#((g>>)g(,))#(((g>>>))g((,))(,))
+G1RL#((g>>)g(,))#(((g>>>))g((,))(,))
+G1RH#((g>>)g(,))#(((g>>>))g((,))(,))
+G1RR#((g>>)g(,))#(((g>>>))g((,))(,))
+G2ZZ#g#((g g<<g (g<< g)))
+G2ZL#((g(,)((,)(g<<))g(,)( g<<)))#g
+G2ZH#g#((g g<<g(g<< g)))
+G2ZR#g#((g g<<g(g<< g)))
+G2LZ#g#((g g<<g(g<< g)))
+G2LL_D#(d↓//(g g<<<))#(g(,)(g<<<))
+G2LL_DR#(d↓//(g/r))
+G2LL#g#((g g<<g g<<))
+G2LH_D#((d↓)/g(,))
+G2LH_N#((n↓)/g(,))
+G2LH#g#((g g<<g(g<< g)))
+G2LR#g#((g g<<g(g<< g)))
+G2HZ#g#(g (g<<g))
+G2HL#g#(p g)
+G2HHB#(p g)#g
+G2HHA#(p g)#g
+G2HH#g#(p g)
+G2HR#g#(p g)
+G2RZ#((g>>)g(,))#(((g>>>))g((,))(,))
+G2RL#((g>>)g(,))#(((g>>>))g((,))(,))
+G2RH#((g>>)g(,))#(((g>>>))g((,))(,))
+G2RR#((g>>)g(,))#(((g>>>))g((,))(,))
+G3ZZ#((g(,)(g<<)g g<<))
+G3ZL#((g(,)((,)(g<<))g(,)( g<<)))
+G3ZH#((p/g(g<<)g(,)))#((g(,)(g<<)g(g<< p)))
+G3ZR#((g(,)(g<<)g(g<< g)))
+G3LZ#((g(,)(g<<)g(g<< g)))
+G3LL_D#((d↓)//g(g<<<))#((d↓)//g(,))
+G3LL#((g(,)((,)(g<<))g(,)( g<<)))#g
+G3LHC#((g(,)(g<<)g(g<<p)))#((g(,)(g<<)g(g<< g)))
+G3LHA#((g(,)(g<<)g(g<< p)))#(((p)/g(,)(g<<)g(,)))
+G3LHB#((g(,)(g<<)g(g<< p)))#((p/g(g<<)g(,)))
+G3LH_D#(((d)g(g<<)g(g<< g)))#(g(,)(g<<<))
+G3LH_N#(((n)/g(g<<)g(g<< g)))#((n)/g(,))
+G3LH#((g(,)(g<<)g(g<< g)))
+G3LR#((g(,)(g<<)g g<<))#g
+G3HZ#((g(,)(g<<)g(g<< g)))#((p)/g(,))
+G3HL#((g(,)((,)(g<<))g(,)( g<<)))#((p)g(,))
+G3HH#((g(,)(g<<)g(g<< p)))#(((p)/g(g<<)g(g<< p)))
+G3HR#g
+G3RZ#((((g>>>)))g(((,))(,))(,))
+G3RL#((((g>>>)))g(((,))(,))(,))
+G3RH#((((g>>>)))g(((,))(,))(,))
+G3RR#((((g>>>)))g(((,))(,))(,))
+G4ZZ#((g(,)((,)(g<<))g(,)((,)(g<<))))
+G4ZL#((g(,)((,)(g<<))g(,)( g<<)))#(g(((g<<<))g ((,)((,)g<<<(,)))))
+G4ZH#((p/(g,, g<< g,)))#((g(,)(g<<)g(g<<//p)))
+G4ZR#((g(,)((,)(g<<))g(,)( g<<)))
+G4LZ#((g(,)(g<<)g (g<< g)))#g
+G4LL_D#((d↓,)//g)#(g(,)(g<<<))
+G4LL#((g(,)((,)(g<<))g(,)( g<<)))#g
+G4LH_D#(((d)g(g<<)g(g<< g)))#((d)/g(,))
+G4LH_N#(((n)/g(g<<)g(g<< g)))#((n)/g(,))
+G4LHC#((g(,)(g<<)g(g<< p)))#((p/g(g<<)g(,)))
+G4LHB#((g(,)(g<<)g(g<< p)))#((p/g(g<<)g(,)))
+G4LH#((g p/g,))#((g(,)(((g<<)))g(,)(((g<<))g(,))))
+G4LR#((g(,)(((g<<)))g(,)(((g<<))g(,))))#((g(,)(g<<)g(g<< g)))
+G4HZ#(((m))/g((g<<)g))
+G4HL#(((m)(g, g< g)//g(,)<<))#(((m)/g(g<<)g(g<<,)))
+G4HH#(((p)/g(g<<)g(g<<//p)))
+G4HR#(((m))/g((,))(,))
+G4RZ#((((g>>>))g(,)(g<<)g(g<< (g))))
+G4RL#((((g>>>))g(,)(g<<)g(g<< (g))))
+G4RH#((g(,)(g<<)g (g<<//p)))
+G4RR#((((g>>>))g(,)(g<<)g(g<< (g))))
+M1ZZ#((p(,) m<(,) p))
+M1ZL#((p(,) m<(,) p))
+M1ZH#(m<(p m<))
+M1ZR#(p m<<)
+M1LZ#(p m<<)
+M1LL#(p m<<)
+M1LH#(p (m< p))
+M1LR#(p m<<)
+M1HZ#(p m<<)
+M1HL_P#(m<p)
+M1HL#((p m<)p)
+M1HH#((p m<)p)
+M1HR#((p m<)p)
+M1RZ#((p m<)p)
+M1RL#((p m<)p)
+M1RH#((p m<)p)
+M2RR#((p m<)p)
+M2ZZ#(( p(,) m<(,)p))
+M2ZL#(( p(,) m<(,)p))
+M2ZH__D#((m<<(,) m(,) m<<))
+M2ZH#(m<<(p m<<))#((p m<< p m<<))
+M2ZR#(m<<(p m<<))
+M2LZ#((p m<)p)#(m<<(m m<<))
+M2LL#((p m<)p)#(m<<(m m<<))
+M2LH#(( p(,) m<(,)p))
+M2LR#(m<<(p m<<))
+M2HZ#(m<<(m m<<))
+M2HLBDG#(((4d/m))<<m(m<<))
+M2HL_DG#((m)<<m(m<<))
+M2HL#((m<<)p(,))
+M2HH#((m<<)p(,))
+M2HR#((m<<m)m<<)
+M2RZ#((m<m<<)m<)
+M2RL#((m<m<<)m<)
+M2RH#(m<(p m<))
+M2RR#((m<<m)m<<)
+M3ZZ#((m<<m)m<<)
+M3ZL#((m<<m)m<<)
+M3ZH#((m<<p)m<<)
+M3ZR#((p m<<)p)
+M3LZ#((m<<m)m<<)
+M3LL#((m<<m)m<<)
+M3LHB#(((g/p,)m(,)(p m<<)))
+M3LHA#(((g/p,)m(,)(p m<<)))
+M3LH#(((g)/p m<<(,) p))#(((p m<<(,) p(,) m<<(,) p m<<(,))))
+M3LR#((p m<<)p)
+M3HZ#((p m<<p m<<))#((m<<m)m<<)
+M3HL_D#(((d)/m<<(,)p m<<))
+M3HL#((p m<<p>m<<))#((p m<<)p)
+M3HH_D#(((d/p)m<<)p)
+M3HH#((m<<p m<<(p m<<)))#((p m<<)p)
+M3HR_D#(((d/p)m<<)p)
+M3HR#((p m<<)p)
+M3RZ#((m<<m m<<m))
+M3RL#((m<<m m<<m))
+M3RH#(m<(p m<))
+M3RR#((m<<m m<<m))
+M4ZZ#((m<<m m<<m))
+M4ZL#((p(m<<)p(m<<p m<<)))
+M4ZH#((p(m<<)p(m<<p m<<)))
+M4ZR#((p(m<<)p(m<<p m<<)))
+M4LZ#((p(m<<)p(m<<p m<<)))
+M4LL#((p(m<<)p(m<<p m<<)))
+M4LH#(((g/)p,(m<<p m<<)))#(((p(,) m<<(,))p(m<<p m<<)))
+M4LR#((p(m<<)p(m<<p m<<)))
+M4HZ#((p>(m<<)p>(m<<p>m<<)))
+M4HL_D#((p>(m<<)p>(m<<p> m<<)))
+M4HL#((p>(m<<)p>(m<<p>m<<)))
+M4HH_D#((p>(m<<)p>(m<< p> m<<)))
+M4HH#((p>(m<<)p>(m<<p>m<<)))
+M4HR#((p>(m<<)p>(m<<p>m<<)))
+M4RZ#((p>(m<<)p>(m<<p>m<<)))
+M4RL#((p>(m<<)p>(m<<p>m<<)))
+M4RH#((p>(m<<)p>(m<<p>m<<)))
+M4RR#((p>(m<<)p>(m<<p>m<<)))
+N1ZZ#(n< s↑)
+N1ZL#(n< s↑)
+N1ZH#(n<(s↑ n<))
+N1ZR#(s↑ n<)
+N1LZ#(s↑ n<)
+N1LL#n#(s↑ n<<)
+N1LH#(s↑ n<)
+N1LR#(s↑ n<)#((s↑ n< s↑ n<))
+N1HZ#((n<s↑ n<s↑))
+N1HL#(n<s↑)
+N1HH#(n<s↑)
+N1HR#(n<s↑)#(n<(s↑ n<))
+N1RZ#((s↑ n<)s↑)
+N1RL#(n<s↑)
+N1RH#((s↑ n<)s↑)
+N1RR#((s↑ n<)s↑)
+N2RR#((s↑ n<)s↑)
+N2ZZ#(n<(s↑ n<))#((n< s↑ n<s↑))
+N2ZLB__P#(n<(n n</))
+N2ZL#(n<(s↑ n<))#((n< s↑ n<s↑))
+N2ZH#(n<(s↑ n<))
+N2ZR#(n<(s↑ n<))
+N2LZ#(n<(n n<))#(s↑(n n<))
+N2LL_GD#((n< n n< n))
+N2LLB_P#(n<(n n<))
+N2LL#(n<<(n n<))#(n(n<<n))
+N2LH#(s↑ (s↑ n<))
+N2LR#(n<(s↑ n<))
+N2HZ#(n<(n n<))
+N2HLB#((s↑ n<<)s↑)
+N2HLA#((s↑ n<<)s↑)
+N2HL_R#((n(,)n<<(,)n))
+N2HL#((n<<)s↑(,))
+N2HH#((n<<)s↑(,))
+N2HR#((n<<n)n<<)
+N2RZ#((n<<n)n<<)
+N2RL#((n<<n)n<<)
+N2RH#(n<(s↑ n<))
+N2RR#((n<<n)n<<)
+N3ZZ#((n<<n)n<<)
+N3ZL#((n<<n)n<<)
+N3ZH#((n<<s↑)n<<)
+N3ZR#((s↑ n<<)s↑)
+N3LZ#((n<<n)n<<)
+N3LL#((n<<n)n<<)
+N3LH#((n<< s↑ n<<s↑))
+N3LR#((s↑ n<<)s↑)
+N3HZ#((n<<n)n<<)
+N3HL_R#((n<<n)n<<)#(((r↑/n<<)s↑ n<< (s↑n)))
+N3HL#((n<<n)n<<)
+N3HH_R#((n<<n)n<<)#(((r↑/n s↑>)n(,)((s↑>)n(,))))
+N3HH_R#((n<<n)n<<)#(((r↑/n<<)s↑ n<< (s↑n)))
+N3HH#((n<<n)n<<)#((s↑ n<<)s↑)
+N3HR_R#(((d/s↑)n<<)s↑)
+N3HR#((n<<n)n<<)#((s↑ n<<)s↑)
+N3RZ#((n<<n n<<n))
+N3RL#((n<<n n<<n))
+N3RH#((n<<n)n<<)#(n<(s↑ n<))
+N3RR#((n<<n n<<n))
+N4ZZ#((((n<<) s↑(,)/
+N4ZL#((s↑(n<<)s↑(n<<s↑ n<<)))
+N4ZH#((((n<<) s↑>(,)//n<< s↑>(,)//n<< s↑>(,)//n<< )))#((s↑(n<<)s↑(n<<s↑ n<<)))
+N4ZR#((s↑(n<<)s↑(n<<s↑ n<<)))
+N4LZ#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#(((n<<< n<//(s↑)/n<(,)/(s↑)/n<(s↑)n<,)))
+N4LL#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#(((n<<< n<,,n<<< n<,,)))
+N4LH#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#(((n<<< n<//(s↑)/n<(,)/(s↑)/n<(s↑)n<,)))
+N4LR#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑(n<<)s↑(n<<s↑ n<<)))
+N4HZ#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4HL_R#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4HL#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4HH_R#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4HH#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4HR#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4RZ#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4RL#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4RH#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+N4RR#((((s↑>>))n</((s↑>>))n</((s↑)n<(,))(,)))#((s↑>(n<<)s↑>(n<<s↑>n<<)))
+P2HZ_N#((n)/p(,))
+P2HZ#p
+P2HL_N#((n)/p(,))
+P2HL#p
+P2HH_N#((n)/p(,))
+P2HH#p
+P2HR_N#((n)/p(,))
+P2HR#p
+P3HZ_N#((n)/p(,))
+P3HZ#p
+P3HL_N#((n)/p(,))
+P3HL#p
+P3HH_N#((n)/p(,))
+P3HH#p
+P3HR_N#((n)/p(,))
+P3HR#p
+P3LL_MM#p#((p,,(,)(d)))
+P3LL__G#p#((p,,(,)(d)))
+P3LL_S#((s)/p(,))
+P3LL#p
+P4LL__M#p#((p,,(,)(d)))
+P4LL__G#p#((p,,(,)(d)))
+P4LL#P
+P4LR#p
+R1ZZ#((g)/r(,))#r
+R1ZL#((g)/r(,))#r
+R1ZH#((g)/r(,))#r
+R1ZR#((g)/r(,))#r
+R1LZ#r
+R1LL#r#((r<< r)r<<)
+R1LL_D#(d↓/r)#((d↓//g)/r)
+R1LL#r
+R1LH#((g)/r(,))#((r r<<<)r)
+R1LR#r#((r r<<<)r)
+R1HZ#r
+R1HL#r
+R1HH#r
+R1HR#r
+R1RZ#((r>>)r(,))#(((r>>>))r((,))(,))
+R1RL#((r>>)r(,))#(((r>>>))r((,))(,))
+R1RH#((r>>)r(,))#(((r>>>))r((,))(,))
+R1RR#((r>>)r(,))#(((r>>>))r((,))(,))
+R2ZZ#((g)/r(,))#r
+R2ZL#((r<<)/r(,))#r
+R2ZH#((s/g)/r)#r
+R2ZR#((s/g)/r)#r
+R2LZ_N#r
+R2LZ#((s/g)/r)#r
+R2LL_D#((d↓//r<<)r)
+R2LL_N#r
+R2LL#((r<<r, r<<))#r
+R2LH_N#r#(((r)r<<(,))/r)
+R2LH#(((s)g>>(,))/r)
+R2LR#((s g>>)r)#r
+R2HZ#r#(g r)
+R2HL#r#(g r)
+R2HH#r#(g r)
+R2HR#r#(g r)
+R2RZ#(((r>>>))r((,))(,))
+R2RL#(((r>>>))r((,))(,))#((r g r,))
+R2RH#(((r>>>))r((,))(,))#((r g r,))
+R2RR#(((r>>>))r((,))(,))#((r g r,))
+R3ZZ#r#((r r<< r,))
+R3ZL#r#((r r<< r,))
+R3ZH#r#((r r<< r,))
+R3ZR#r#((r r<< r,))
+R3LZ_N#r
+R3LZ#(((g)r(,)r<< r))#(((r g )r((,)r<<(,))r))
+R3LL_D#((d↓//r<<)r)
+R3LL_N#r
+R3LLA#r#(((r g )r((,)r<<(,))r))
+R3LL#r#(((s g>>> )r((,)r<<(,))r))
+R3LH_N#r
+R3LH#((g)/r(,))#((r g r,))
+R3LR#(((r)g>>(,))r)#((r r<<<)r)
+R3HZ_M#(((p))/r(,)((,)))
+R3HZ#r#((g)/r(,))
+R3HL_M#(((p))/r(,)((,)))#(((g))/r(,)((,)))
+R3HL#r
+R3HH_MS#(((p))/r(,)((,)))
+R3HH_PS#(((p))/r(,)((,)))
+R3HH#r
+R3HR#r#((g)/r(,))
+R3RZ#((((r>>>)))r(((,))(,))(,))#((r (g) r(r<)r))
+R3RL#((((r>>>)))r(((,))(,))(,))#((r g r,))
+R3RH#((((r>>>)))r(((,))(,))(,))#((r (g) r(r<)r))
+R3RR#((((r>>>)))r(((,))(,))(,))#((r (g) r(r<)r))
+R4ZZ#r
+R4ZL#r
+R4ZH#r#((r g r,))
+R4ZR#r
+R4LZ_N#r
+R4LZ#(((g)r(,)r<< r))#r
+R4LL_N#r
+R4LL_D#((d↓//r<<)r)
+R4LL#r#(((r g )r((,)r<<(,))r))
+R4LH_N#r
+R4LH#(((r g )r((,)r<<(,))r))#((r<<<)r(,))
+R4LR#(((r g)>>rr<r))
+R4HZ#(((r<<<))/r((,))(,))#(((g))/r((,))(,))
+R4HL_MS#(((g))/r((,))(,))
+R4HL_PS#(((g))/r((,))(,))
+R4HL#(((g))/r((,))(,))#(((r<<<))/r((,))(,))
+R4HH_M#((m)/r(,))#(((r<<<))/r((,))(,))
+R4HH#(((r<<<))/r((,))(,))#(((g))/r((,))(,))
+R4HR#(((r<<<))/r((,))(,))#(((g))/r((,))(,))
+R4RZ#((((r>>>)))r(((,))(,))(,))
+R4RL#((((r>>>)))r(((,))(,))(,))
+R4RH#((((r>>>)))r(((,))(,))(,))
+R4RR#((((r>>>)))r(((,))(,))(,))
+R5LZ_S#(((g)r(,)(r<< r r<< r)))
+R5LZ#r
+S4HZ#s#((s(((s>>>)))s(((,)),(,))s))
+S4HH#s#((s(((s>>>)))s(((,)),(,))s))
+S4HL#s#((s(((s>>>)))s(((,)),(,))s))
+65`;
+
+gmkdata['kambodhi'] = `D1LLCPM#(,)(d)/
+D1LLCPP#(,)(d)/
+D1LL#d
+D1LH__N#d
+D1LH#d#((d/s↑)/d)
+D1LL_PM#((p d, p))
+D1LL#d
+D1RZ#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RL#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RH#((d>>)d(,))# (((d>>>))d((,))(,))
+D1RR#((d>>)d(,))# (((d>>>))d((,))(,))
+D2ZH#((d/s↑)/d)#d
+D2LL_PM#d#((p d, p))
+D2LL_PP#d#((d<< d, d))
+D2LL#d
+D2LH__N#d
+D2LH#(s↑/d/)#((d/s↑)/d)
+D2LR#((d/n*/d,))#((d n)d)
+D2RH__S#((s↑/d)d)
+D2RH#d
+D3ZH__S#((s↑/d)d)
+D3ZH#d
+D3LL_PM#d#((p d, p))
+D3LL#d
+D3LH__N#d
+D3LH#((p//s↑/d,))#((s↑/d)d)
+D3LR#d#(((n)d(,)(n)d(,)))
+D3LR#d
+D3RZ#((((d>>>)))d(((,))(,))(,))#((n)d(,))
+D3RL#((((d>>>)))d(((,))(,))(,))#(d(,)(n))
+D3RH#((d/n*/d,))#((n)d(,))
+D3RR#((((d>>>)))d(((,))(,))(,))#((n)d(,))
+D4LH__N#d
+D4LH#(((d//s↑)/d(,)/(s↑)/d))#((p//s↑/d,))
+D4LR#((n d n d))#d
+D4RZ#((((d>>>)))d(((,))(,))(,))#((n)d(,))
+D4RL#((((d>>>)))d(((,))(,))(,))#(d(,)(n))
+D4RH#((d/n*/d,))#((n)d(,))
+D4RR#((((d>>>)))d(((,))(,))(,))#((n)d(,))
+D5LR#d
+D5ZR#d
+D5LH#d
+D5ZH#d
+D5RH#d
+D5RL#d
+D5ZL#d
+G1LR#((g m g,))
+G1HH_MP#((g<<m) g)#g
+G1HH_MM#g<<<#((m, g<<m))
+G1HH#g
+G1RZ#((g>>>)g(,))
+G1RL#((g>>>)g(,))
+G1RH#((g>>>)g(,))
+G1RR#((g>>>)g(,))
+G2LZ_D#g
+G2LZ_R#g
+G2LZ#g
+G2LL_D#g
+G2LH_D#(g(g<<< g))#g
+G2LH#(g(g<<< g))
+G2HL#(g(,)(g<<<))
+G2HH_MP#(((g m)) g(,))
+G2HH#((g(,)m g(,)))#g
+G2HR#(g(mg))
+G2RZ#((g>>>)g(,))
+G2RL#((g>>>)g(,))
+G2RH#((g>>>)g(,))
+G2RR#((g>>>)g(,))
+G3LZ_D#g
+G3LZ#g
+G3LL_D#g
+G3LL#g
+G3LH#(g(g<<< g))
+G3LR_D#g
+G3LR#g
+G3HL#(g(,)(g<<<))
+G3HH_MP#((g m) g)
+G3HH#g
+G3HR#(g(mg))
+G4LZ_D#g
+G4LZ#g
+G4LL_D#g
+G4LL#g
+G4LH#(g(,)((g<<< g)))
+G4LH#g
+G4HH_MP#(((g m))g(,))
+G4HH_MG#(g(,)((m g)))
+G4HH#g
+G4HR#(g(mg))
+M1LL_R#(m (g<< m))
+M1LL#(m (g<< m))#(g<< m)
+M1LH#(m (g<< m))#(/p g)
+M1HL_DG#((m g<< m)(,))
+M1HL#m
+M1HH#(g<< m)
+M1HR#(g<<m)
+M1RL#(g<<m)
+M2ZL#m#(((m/g<</m,/g<</m,/g<<)))
+M2ZR#m#(((m/g<</m,/g<</m,/g<<)))
+M2LL#((m g<< m)(,))
+M2LH#((g<<(,)/p(,)/g<<))#(m (g<< m))
+M2HL_DG#((m g<< m g<<))#m
+M2HL#m
+M2HH__P#((g<<(,)/p(,)/g<<))
+M2HH#((m(,)/g<</m(,)))#((m g<<m,))
+M2ZH__P#((g<<(,)/p(,)/g<<))#((m(,)/g<</m(,)))
+M2ZH#m
+M2HR#(((m g<))m(,) )
+M2RZ#(((m g<))m(,) )
+M2RL#((g<<)m(,))
+M2RH#(((m g<))m(,) )
+M3ZZ#(((m/g<</m,/g<</m,/g<<)))#m
+M3ZL#(((m/g<</m,/g<</m,/g<<)))#m
+M3ZH#(((m/g<</m,/g<</m,/g<<)))#m
+M3ZR#(((m/g<</m,/g<</m,/g<<)))#m
+M3LZ#((((m g<< m)g<,((,)(g<<))g<<, m,)))#m
+M3LL#((((m g<< m)g<,((,)(g<<))g<<, m,)))#m
+M3LH#((g/p(p/g/p/g)))
+M3LR#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M3HZ#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M3HL_P#((p m(g g>>>> g m )))
+M3HL#(((m/g<</m,/g<</m,/g<<)))
+M3HH#((((m g m)g,((,)(g>>))g, m,)))
+M3HR#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M3RZ#(((g<<)m(,)(g<<)m(,)))#(((m/g<</m,/g<</m,/g<<)))
+M3RL#(((g<<)m(,)(g<<)m(,)))#(((m/g<</m,/g<</m,/g<<)))
+M3RH#(((g<<)m(,)(g<<)m(,)))#(((m/g<</m,/g<</m,/g<<)))
+M3RR#(((g<<)m(,)(g<<)m(,)))#(((m/g<</m,/g<</m,/g<<)))
+M4ZZ#((((g m)g<<,,(m)g<<,(m)g)))
+M4ZL#((((g m)g<<,,(m)g<<,(m)g)))
+M4ZH#((((g m)g<<,,(m)g<<,(m)g)))
+M4ZR#((((g m)g<<,,(m)g<<,(m)g)))
+M4LZ#((((m g<< m)g<,((,)(g<<))g<<, m,)))#m
+M4LL#((((m g<< m)g<,((,)(g<<))g<<, m,)))#m
+M4LH#((((g m)g<<,,(m)g<<,(m)g)))
+M4HZ#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M4HL#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M4HH#(((m/g<</m,/g<</m,/g<<)))#((((m g m)g,((,)(g>>))g, m,)))
+M4HR#((((g m)g<<,,(m)g<<,(m)g)))
+M4HL_P#((p m(g g>>>> g m )))
+M4HL#m
+M4RZ#((((m g<< m)g<,((,)(g<<))g<<, m,)))
+M4RH#((((g m)g<<,,(m)g<<,(m)g)))
+M4RR#(((g g<<,,,(m)g<<,(g))))
+M5ZZ#((((m)/g<<,,m g<<, m(g))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M5ZH#((((m)/g<<,,m g<<, m(g))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M5ZR#((((m)/g<<,,m g<<, m(g))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M5ZL#((((m)/g<<,,m g<<, m(g))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M6ZZ#(((((m))/g<,(,)((m))g<<,((m))g(,)<<((,)m g ))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M6ZH#(((((m))/g<,(,)((m))g<<,((m))g(,)<<((,)m g ))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M6ZR#(((((m))g<,(,)((m))g<<,((m))g(,)<<((,)m g ))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+M6ZL#(((((m))/g<,(,)((m))g<<,((m))g(,)<<((,)m g ))))#((((m)/g<<,,(m)g<<,(m) g<<(m ))))
+N1ZR#n>#((n(,)d(,)n))
+N1LL#n>#((n(,)d(,)n))
+N1LR#(d n)#((n(,)d(,)n))
+N1HL#n#(d n)
+N1HR#n#(d n)
+n1HL#(n*<<s↑)
+N1RZ#(d/n)#((n(,)d(,)n))
+N1RL#(d/n)#((n(,)d(,)n))
+N1RR#(d n)#((n(,)d(,)n))
+N2ZL#((n(,)d(,)n))
+N2ZR#((n(,)d(,)n))
+N2LL_D#(n(d n))#((n(,)d<< n(,)))
+N2LL#(n(d n))#((n(,)d<< n(,)))
+N2LR#((n(,)d(,)n))
+N2HL#((n(,) d n(,)))#((s↑/n,(,)(s↑)))
+n2HL#((s↑ n*<<)s↑)
+N2HR#((n(,) d n>>(,)))
+N2RZ#((d n>>, d))
+N2RL#((d)n(,))
+N2RH#((d)n(,))
+N2RR#((d)n(,))
+N3ZL#((d((n>))/d,/((n>)d)))
+N3ZR#((d((n>))/d,/((n>)d)))
+N3LZ#((d((n>))/d,/((n>)d)))
+N3LL#((d((n>))/d,/((n>)d)))
+N3LR#((d((n>))/d,/((n>)d)))
+N3HZ_S#(((s↑d)n(,)(d(,)/n(,))))
+N3HZ#(((nd,/nd,/nd)))
+N3HL_S#(((s↑d)n(,)(d(,)/n(,))))
+N3HL#(((nd,/nd,/nd)))
+n3HL#((s↑ n*<<s↑ n*<<))
+N3HR_S#(((s↑d)n(,)(d(,)/n(,))))
+N3HR#(((nd,/nd,/nd)))
+N4ZL#((d((n>))/d,/((n>)d)))#(((d/(n>))d(,)/((n>))d<<((,)(n>>))))
+N4ZR#((d((n>))/d,/((n>)d)))
+N4LZ#((d((n>))/d,/((n>)d)))
+N4LL#((d((n>))/d,/((n>)d)))
+N4LR#((d((n>))/d,/((n>)d)))#((d((,)(n))d((,)(n))d))
+N4HZ_S#(((s↑d)n(,)(d(,)/n(,))))
+N4HZ#(((nd,/nd,/nd)))
+N4HL_S#(((s↑d)n(,)(d(,)/n(,))))
+N4HL#(((nd,/nd,/nd)))
+n4HL#((s↑ n*<<s↑ n*<<))
+N4HR_S#(((s↑d)n(,)(d(,)/n(,))))
+N4HR#(((nd,/nd,/nd)))
+N4RZ#(((d)/n*/n(,)(s↑ n)))
+N4RL#(((d)/n*/n(,)(s↑ n)))
+N4RR#(((d)/n*/n(,)(s↑ n)))
+P1HH_n#p
+P1HH#p
+P1HL_n#p
+P1HL#p
+P1HR_n#p
+P1HR#p
+P2LL_G#((g)/p(,))
+P2LL#p
+P2LH_G#((g)/p(,))
+P2LH#p
+P2LR_G#((g)/p(,))
+P2LR#p
+P2HH_n#p
+P2HH#p
+P2HL_n#p
+P2HL#p
+P2HR_n#p
+P2HR#p
+P3HH_n#((n*)/p(,))
+P3HH#p
+P4RL__M#((p,,(,) /(d)))#p
+P3RL#p
+P4LL__M#((p,,(,) /(d)))#p
+P3LL#p
+P4HL__M#((p,,(,) /(d)))#p
+P3HL#p
+P4ZL__M#((p,,(,) /(d)))#p
+P3ZL#p
+P4HH_n#((n*)/p(,))
+P4HH#p
+R1LZ#((r r<<<r r<<<))
+R1LL_D#(d↓/r)
+R1LL#((r r<<<r r<<<))
+R1LH#(g//r)#r
+R1LR#(g/r)#r
+R1HZ#r
+R1HL#r
+R1HH#((r(,)r<<r(,)))#((r g r,))
+R1HR#((r(,)r<<r(,)))
+R2LZ#((r r<<<r r<<<))
+R2LL_D#((d↓)//r(,))
+R2LL#((r r<<<r r<<<))
+R2LH__M#((r(,)r<<<r(,)))
+R2LH#((g)r(,))#(/g/r)
+R2LR#(((g)/r(/r<</r/r<</r,)))
+R2HL_G#((g r)r<<)
+R2HL#(r r<<)
+R2HH#((r g r,))
+R2HR#((r g r,))
+R2RZ#((r(,)(/r<</r/r<</r,)))
+R2RL#((r(,)(/r<</r/r<</r,)))
+R2RH#((r(,)(/r<</r/r<</r,)))
+R2RR#((r(,)(/r<</r/r<</r,)))
+R3ZZ#((r(,)(/r<</r/r<</r,)))
+R3ZL#((r(,)(/r<</r/r<</r,)))
+R3ZH#((g)r(,))#(/g/r)
+R3ZR#((r(,)(/r<</r/r<</r,)))
+R3LZB#(((s)/r(/r<</r/r<</r,)))
+R3LZ#(((g)/r(/r<</r/r<</r,)))
+R3LLB#(((s)/r(/r<</r/r<</r,)))
+R3LL#(((g)/r(/r<</r/r<</r,)))
+R3LHB#(((s)/r(/r<</r/r<</r,)))
+R3LH#(((g)/r(/r<</r/r<</r,)))
+R3LRB#(((s)/r(/r<</r/r<</r,)))
+R3LR#(((g)/r(/r<</r/r<</r,)))
+R3HZ#((r(,)(/r<</r/r<</r,)))
+R3HL#((r(,)(/r<</r/r<</r,)))
+R3HH#((r(,)(/r<</r/r<</r,)))
+R3HR#((r(,)(/r<</r/r<</r,)))
+R3RZ#((r(,)(/r<</r/r<</r,)))
+R3RL#((r(,)(/r<</r/r<</r,)))
+R3RH#(((g)/r(/r<</r/r<</r,)))
+R3RR#(((g)/r(/r<</r/r<</r,)))
+R4ZZ#((r(,)(/r<</r/r<</r,)))
+R4ZL#((r(,)(/r<</r/r<</r,)))
+R4ZH#(((g)/r(/r<</r/r<</r,)))
+R4ZR#(((g)/r(/r<</r/r<</r,)))
+R4LZB#(((s)/r(/r<</r/r<</r,)))
+R4LZ#(((g)/r(/r<</r/r<</r,)))
+R4LLB#(((s)/r(/r<</r/r<</r,)))
+R4LL#(((g)/r(/r<</r/r<</r,)))
+R4LHB#(((s)/r(/r<</r/r<</r,)))
+R4LH#(((g)/r(/r<</r/r<</r,)))
+R4LRB#(((s)/r(/r<</r/r<</r,)))
+R4LR#(((g)/r(/r<</r/r<</r,)))
+R4HZ#((r r<r(r< r)))
+R4HL_G#(((g/r, r<<< r, g r)))
+R4HL#(((r,, r<<< r r<<< r,)))
+R4HH#(((r,, r<<< r r<<< r,)))
+R4HR_G#(((g/r, r<<< r, g r)))
+R4HR#(((r,, r<<< r r<<< r,)))
+R4RL#(((r,, r<<< r r<<< r,)))
+R4RH#(((r,, r<<< r r<<< r,)))
+S2HZ_G#s
+S2HZ#s
+S2HL_G#s
+S2HL#s
+S2HH_G#s
+S2HH#s
+S2HR_G#s
+S2HR#s
+S3HZ_G#s
+S3HZ#S
+S3HL_G#s
+S3HL#s
+S3HH_G#s
+S3HH#s
+S3HR_G#s
+S3HR#s
+S4HZ_G#s
+S4HZ#s
+S4HL_G#s
+S4HL#s
+S4HH_G#s
+S4HH#s
+S4HR_G#s
+S4HR#s
+S4ZH#((s,,(,)(r)))#s
+S4RH#((s,,(,)(r)))#s
+S4LH#((s,,(,)(r)))#s
+S4LH#((s,,(,)(r)))#s
+28`;
+
+gmkdata['shanmuk'] = `D1LZ#(d p)#((d p d,))
+D1LL#(d p)#((d p d,))
+D1LH#(d p)#((d p d,))
+D1LR#(d p)#((d p d,))
+D1HZ#(p d)#((d p d,))
+D1HL#(p d)#(d(p d))
+D1HHCNN#d*
+D2ZZ#((d p d,))
+D2ZL#((d p d,))
+D2ZH#((d p d,))
+D2ZR#((d p d,))
+D2LZ#(d(p d))#((d(,)p(,)d))
+D2LL#(d(p d))#((d(,)p(,)d))
+D2LH#(d(p d))#((d(,)p(,)d))
+D2LR#(d(p d))#((d(,)p(,)d))
+D2HZ#d#(/(p)d(,))
+D2HL#d#(/(p)d(,))
+D2HL_S#(s↑/d)
+D2HL_R#(s↑/d)
+D2HH#d#((n/)d(,))
+D2HR#d#(/(p)d(,))
+D2RZ#((d>>)d(,))
+D2RL#((d>>)d(,))
+D2RH#((d>>)d(,))
+D2RR#((d>>)d(,))
+D3LH#(d(p d))#((d(,)p(,)d))
+D3LR#(d(p d))#((d(,)p(,)d))
+D3HZ#((d(,)p(,)d))
+D3HL#d#(/(p)d(,))
+D3HL_S#((d(,)p(,)d))
+D3HL_R#((d(,)p(,)d))
+D3HR#(((n p d p))d)#(((n)p(d)p(d,)))
+D4LH#(((d)p<(,)(d)d>(d)))#((p(,)d)p(,)(d)))
+D4HL#((d p<(d)d>(d)))
+D4HL_S#(((s↑)/(p, d p)d(,)))
+G1ZL#(r g)#((g(,)r(,)g))
+G1LL#(r g)
+G1LL_R#(r g)#((g(,)r g(,)))
+G1LH#(g r)#((g(,)r g(,)))
+G1LR#(g r)
+G1HL#g#(/r g)
+G1HH#g#(/r g)
+G1HR#g#(/r g)
+G1RZ#(g r)
+G1RL#(g r)
+G1RH#(g r)
+G1RR#(g r)
+G2ZZ#((g(,)r(,)g))
+G2ZL#((g(,)r(,)g))
+G2ZH#((g(,)r(,)g))
+G2ZR#((g(,)r(,)g))
+G2LZ#((g(,)r(,)g))
+G2LL#(r g)#((g(,)r(,)g))
+G2LH#((g(,)r(,)g))#(r g)
+G2LR#((g(,)r(,)g))
+G2HZ#((p)//g(,))#((m//r g r))
+G2HL#((p)//g(,))#((m//r(,) g(,)))
+G2HH#((p)//g(,))#((m//r g r))
+G2HR#((p)//g(,))#((m//r g r))
+G2RZ#(g r)
+G2RL#(g r)
+G2RH#(g r)
+G2RR#(g r)
+G3ZZ#((g(,)r(,)g))
+G3ZL#((g(,)r(,)g))
+G3ZH#((g(,)r(,)g))
+G3ZR#((g(,)r(,)g))
+G3LZ#((g(,)r(,)g))
+G3LL#(r g)#((g(,)r(,)g))
+G3LH#((g(,)r(,)g))#(r g)
+G3LR#((g(,)r(,)g))
+G3HZ#((m///r g r))
+G3HL#((m///g, (r g)))
+G3HH#((m///g, (r g)))
+G4ZZ#((r(,)(g) r<<(,)(g)))
+G4ZL#((r(,)(g) r<<(,)(g)))
+G4ZH#((r(,)(g) r<<(,)(g)))
+G4ZR#((r(,)(g) r<<(,)(g)))
+G4LZ#((r(,)(g) r<<(,)(g)))
+G4LL#((r(,)(g) r<<(,)(g)))
+G4LH#((r(,)(g) r<<(,)(g)))
+G4LR#((r(,)(g) r<<(,)(g)))
+G4HZ#((m///r g r))
+G4HL#((m///g, (r g)))
+G4HH#((m///r, g))
+G4HR#((m///r g r))
+M1ZZ#((p(,) m<(,) p))
+M1ZL#((p(,) m<(,) p))
+M1ZH#(m<(p m<))
+M1ZR#(p m<<)
+M1LZ#(p m<<)
+M1LL#(p m<<)
+M1LH#(p (m< p))
+M1LR#(p m<<)
+M1HZ#(p m<<)
+M1HL#((p m<)p)
+M1HH#((p m<)p)
+M1HR#((p m<)p)
+M1RZ#((p m<)p)
+M1RL#((p m<)p)
+M1RH#((p m<)p)
+M2RR#((p m<)p)
+M2ZZ#(( p(,) m<(,)p))
+M2ZL#(( p(,) m<(,)p))
+M2ZH#(m<<(p m<<))
+M2ZR#(m<<(p m<<))
+M2LZ#((p m<)p)#(m<<(m m<<))
+M2LL#((p m<)p)#(m<<(m m<<))
+M2LH#(( p(,) m<(,)p))
+M2LR#(m<<(p m<<))
+M2HZ#((p, m< p))#(m<<(m m<<))
+M2HL#((m<<)p(,))
+M2HLBDG#(((4d/m))<<m(m<<))
+M2HL_DG#((m)<<m(m<<))
+M2HH#((m<<)p(,))
+M2HR#((m<<m)m<<)
+M2RZ#((m<m<<<)m<)
+M2RL#((m<p)m<)
+M2RH#(m<(p m<))
+M2RR#((m<<p)m<<)
+M3ZZ#((m<<p)m<<)
+M3ZL#((m<<p)m<<)
+M3ZH#((m<<p)m<<)
+M3ZR#((p m<<)p)
+M3LZ#((m<<p)m<<)
+M3LL#(((g//m<<)p)m<<)
+M3LH#(((g//m<<)p m<<(p m<<)))#((p m<<)p)
+M3LR#((g//p m<<p))#((p m<<)p)
+M3HZ#((p m<<p m<<))#((m<<m)m<<)
+M3HL#((p m<<p>m<<))#((p m<<)p)
+M3HL_D#(((d)/m<<(,)p m<<))
+M3HH#((m<<p m<<(p m<<)))#((p m<<)p)
+M3HH_D#(((d/p)m<<)p)
+M3HR#((p m<<)p)
+M3HR_D#(((d/p)m<<)p)
+M3RZ#((m<p m<m))
+M3RL#((m<<p m m<<))
+M3RH#(m<(p m<))
+M3RR#((m<<p m m<<))
+M4ZZ#((m<<p m<<m))
+M4ZL#((p(m<<)p(m<<p m<<)))
+M4ZH#((p(m<<)p(m<<p m<<)))
+M4ZR#((p(m<<)p(m<<p m<<)))
+M4LZ#((p(m<<)p(m<<p m<<)))
+M4LL#(((g p m<<)p(m<<p m<<)))
+M4LH#(((g p m<<)p(m<<p m<<)))
+M4LR#(((g p m<<)p(m<<p m<<)))
+M4HZ#((p>(m<<)p>(m<<p>m<<)))
+M4HL#((p>(m<<)p>(m<<p>m<<)))
+M4HL_D#((p>(m<<)p>(m<<p> m<<)))
+M4HH#((p>(m<<)p>(m<<p>m<<)))
+M4HH_D#((p>(m<<)p>(m<< p> m<<)))
+M4HR#((p>(m<<)p>(m<<p>m<<)))
+M4RZ#((p>(m<<)p>(m<<p>m<<)))
+M4RL#((p>(m<<)p>(m<<p>m<<)))
+M4RH#((p>(m<<)p>(m<<p>m<<)))
+M4RR#((p>(m<<)p>(m<<p>m<<)))
+N1ZH#n#((n n>>> n,))
+N1ZR#n#((n n>>> n,))
+N1LZ#n#((n n>>> n,))
+N1LL#(d*n)#n
+N1LH#(n d*)
+N1HL#(d* n)
+N1HH#n#(n d*)
+N1HR#(n d*)
+N1RZ#((d*)n(,))
+N1RL#((d*)n(,))
+N1RH#((d*)n(,))
+N1RR#((d*)n(,))
+N2ZH#((n d n,))
+N2ZR#((n(,)n>n(,)))
+N2LZ#((n n>>)n)
+N2LL#((n(,)d*n(,)))#((d* n <(,)(d*) n<))
+N2LH#((d*/s↑(,)/ d*(,)))
+N2LR#((d* n d*n))#((d*)n(,))
+N2HZ#((n n>>)n)#((d*)n(,))
+N2HL#((d*)n(,))#n
+N2HH#(d*n)#n
+N2HR#n#(d*n)
+N2RZ#((n d*)n)
+N2RL#((n d*)n)
+N2RH#((n d*)n)
+N2RR#((n d*)n)
+N3ZZ#((n(d*)n,(,)))
+N3ZL#((n(d*)n,(,)))
+N3ZH#((n(d*)n,(,)))
+N3ZR#((n d* n(,)-(,)))
+N3LZ#((n d*)n)
+N3LL#((n d*)n)#((n, (n>) n(n>)))
+N3LH#(((n d*))n(,))#(((d*/s↑)/d*/s↑/d*))
+N3LR#(((n d*))n(,))
+N3HZ#(((d*/n,/d*))n)#((s↑/d)n)
+N3HL#((s↑/d*)n)#(((d*/n,/d*))n)
+N3HH#(((d*/n,/d*))n)#((s↑/d)n)
+N3HR#(((d*/n,/d*))n)#((s↑/d)n)
+N3RZ#(((n d*))n(,))
+N3RL#(((n d*))n(,))
+N3RH#(((n d*))n(,))
+N3RR#(((n d*))n(,))
+N4ZZ#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4ZL#(((n d*))n(,))#(((d/(s↑))/d*/n/d*((,))))
+N4ZH#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4ZR#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4LZ#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4LL#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4LH#(((n d*))n(,))#(((d/(s↑))/d*/n/d*((,))))
+N4LR#(((d/(s↑))/d*/n/d*((,))))#(((n d*))n(,))
+N4HZ#(((d*/n,/d*))n)#(((s↑/d))n(,))
+N4HL#(((s↑/d*/n,/d*)//n(,)))#(((s↑/d))n(,))
+N4HH#(((d*/n,/d*))n)#(((s↑/d))n(,))
+N4HR#(((d*/n,/d*))n)#(((s↑/d))n(,))
+N4RZ#(((d*/n,/d*))n)
+N4RL#(((d*/n,/d*))n)
+N4RH#(((d*/n,/d*))n)
+N4RR#(((d*/n,/d*))n)
+P3HL_S#p
+P3HL#p
+P3HH_S#p
+P3HH#p
+P3HZ_S#p
+P3HZ#p
+P3HR_S#p
+P3HR#p
+P3LH_R#p
+P3LH#p
+P3LL_R#p
+P3LL#p
+P3LR_R#p
+P3LR#p
+P3LZ_R#p
+P3LZ#p
+P4HL_S#p
+P4HL#p
+P4HH_S#p
+P4HH#p
+P4HZ_S#p
+P4HZ#p
+P4HR_S#p
+P4LH_R#p
+P4LL_R#p
+P4LR_R#p
+P4LZ_R#p
+R1HR_P#(p//r)
+R1HL_P#(p//r)
+R3RZ#((((r>>>))r,,(,)((,))))
+R3RL#((((r>>>))r,,(,)((,))))
+R3RH#((((r>>>))r,,(,)((,))))
+R3RR#((((r>>>))r,,(,)((,))))
+R4RZ#(r>>>))r,,(,)((,))))
+R4RL#((((r>>>))r,,(,)((,))))
+R4RH#((((r>>>))r,,(,)((,))))
+R4RR#((((r>>>))r,,(,)((,))))
+S2LR_P#(((p↓)//s,(,),))
+S2LR#s
+S2LH_P#(((p↓)//s,(,),))
+S2LH#s
+S3LR_P#(((p↓)//s,(,),))
+S3LR#s
+S3LH_P#(((p↓)//s,(,),))
+S3LH#s
+S3LH#s	
+56`;
+
+gmkdata ['neelam']=`D1ZZ#((d<< d(,) d<<(,)))
+D1ZL#((d<< d(,) d<<(,)))
+D1ZH#((d<< d(,) d<<(,)))
+D1ZR#((d<< d(,) d<<(,)))
+D1LZ#((d<< d(,) d<<(,)))
+D1LL_P#((p d<<d d<<))#((d<<(,) d(,) d<<))
+D1LL#d#((d<< d(,) d<<(,)))
+D1LH#((s↑)/d(,))
+D1LR#((s↑)/d(,))
+D1HZ#((d<< d(,) d<<(,)))
+D1HL#(d(d<< d))#d
+D1HH#((d(,)d<<<d(,)))
+D1HR#(d(d<< d))
+D1RZ#(d(d<< d))
+D1RL#(d(d<< d))
+D1RH#(d<<d)#((s↑)/d(,))
+D1RR#((d(,)d<<<d(,)))
+D2ZZ#((d<< d(,) d<<(,)))
+D2ZL#((d<< d(,) d<<(,)))
+D2ZH#((s↑ d(,) d<<(,)))#((d<< d(,)d<<(,)))
+D2ZR#((d n)d)#((d<< d(,) d<<(,)))
+D2LZ#((d<< d(,) d<<(,)))
+D2LL_P#(((p)/d<<d(,) d<<))
+D2LL#((d< d(,) d<(,)))
+D2LH#(n d)
+D2LR#((d<< d(,) d<<(,)))
+D2HZ#(d(d<< d))
+D2HL#(d d<<<)#(/d(d<< d))
+D2HHBS#(s↑ d)
+D2HH_S#(d/(n /d))
+D2HH_N#(d/(n /d))#(/d(d<<d))
+D2HH#(d/(n /d))
+D2HR#(s↑ (d<<(d d<<)))
+D2RZ#((d<< d(,) d<<(,)))
+D2RL#((d<< d(,) d<<(,)))
+D2RH#(((d n))d(,))
+D2RR#((d<< d(,) d<<(,)))
+D3ZZ#((d<< d d<<d))
+D3ZL#((d<< d d<<d))
+D3ZH#(n (d<< d))
+D3ZR#((d<< d d<<d))
+D3LZ#((d<< d d<<d))
+D3LL_P#((d<< d d<<d))#(((p(,)(d<<))d(,)(d<<) d))
+D3LL#((d<< d d<<d))
+D3LH#(((p//s↑) d(n)d(,)))#((n d<< d d<<))
+D3LR#((d<< d d<<d ))
+D3HZ#((d d<< d d<< ))
+D3HL#((d d<< d d<< ))
+D3HH#((d d<< d d<< ))
+D3HR#((d d<< d d<< ))
+D3RZ#((d<< d(,) d<<(,)))
+D3RL#((d<< d(,) d<<(,)))
+D3RH#(((d d<<<))d(,))
+D3RR#((d<< d(,) d<<(,)))
+D4ZL#(((p /n d d<<) d d<<))#(((n d) d<< d d<<))
+D4ZR#(((p n )d<< d d<<))
+D4LZ#((d<< d d<<d))
+D4LLA#(((p /n d d<<) d d<<))#(((n d) d<< d d<<))
+D4LL__P#(((p /n d d<<) d (d<< n)))
+D4LL#((d<< d d<<d))
+D4LH#(((p /n, d/ n,>>>)d<<))#((n  d<< d d<<))
+D4LR#(((p /n d, d<<< d, d<<<)))
+D4HZ#((d d<< d d<< ))
+D4HLEP#((d<< d d<<(d n)))
+D4HL#((d d<< d d<< ))
+D4HH#((d d<< d d<< ))
+D4HR#((d d<< d (d n)))
+D4RZ#((d<< d(,) d<<(,)))
+D4RL#((d<< d(,) d<<(,)))
+D4RH#(((d n))d(,))
+D4RR#((d<< d(,) d<<(,)))
+G1LL_P#g
+G1LL_D#g
+G1LL_S#g
+G1LL#g
+G2LL_P#g
+G2LL_D#g
+G2LL_S#g
+G2LL#g
+G2HZ_P#((p)/g(,))
+G2HZ#g
+G2HL_P#((p)/g(,))
+G2HL#g
+G2HH_P#((p)/g(,))
+G2HH#g
+G3ZH#(g(,)(m))#g
+G3LH__M#g#((g, ,///m))
+G3LH#g
+G3HL__R#g#(g(,)((,)(m)))
+G3HL#g
+G4ZH__M#g#((g, ,///m))
+G4ZH#(g(,)(m))#g
+G4LH__M#g#((g, ,///m))
+G4LH#g
+G4HL#g#(g(,)((,)(m)))
+G4HH__M#g/#g
+G4HH#g
+G4RZ#g#(((g>>>))g((,))(,))
+G4RL#g#(((g>>>))g((,))(,))
+G4RH__M#g//#g
+G4RH#g//#(((g>>>))g((,))(,))
+G4RR#g#(((g>>>))g((,))(,))
+M1ZZ#m#((m(,) g<< m(,)))
+M1ZL#m#((m(,) g<< m(,)))
+M1ZH#m#((g p)m)
+M1ZR#m#((m(,) g<< m(,)))
+M1LZ#m#((m(,) g<< m(,)))
+M1LL_GR#m#((g<<<) m(,))
+M1LL#m#((m(,) g<< m(,)))
+M1LH#((m(,) g<<m(,)))#m
+M1LR#((m(,) g<< m(,)))#m
+M1HZ#((m(,) g<< m(,)))#m
+M1HL#m#((p g m g))
+M1HHCPP#(,/g<<)/#(g<< (p g))
+M1HH#(g<< m)#((g p)m)
+M1HR#(g<<m)
+M1RZ#m#(g<<m)
+M1RL#m#(g<<m)
+M1RH#m#((g p)m)
+M1RR#m#(g<<m)
+M2ZZ#((m(,) g<< m(,)))#m
+M2ZL#((m(,)g<< m(,)))
+M2ZH#((m(,)g<< m(,)))#((g/p(,)/m(,)))
+M2ZR#((m m>>)m)
+M2LZ#((m(,)g<<m(,)))
+M2LL#((m g<<)m)#m
+M2LH#(((g<<)/p(,)/(g<<)m(,)))#((m(,)g<<m(p)))
+M2LR#((m g<<) m)
+M2HZ#((m g<< m g<<))#((m(,)g<< m(,)))
+M2HL__G#((g<<m) m)
+M2HL_P#((g<<m) m)#((m(,)g m(,)))
+M2HL_PR#((g<<m(,) g(,)))
+M2HL#((g<<m) m)
+M2HH_S#((s↑//g/p/m))#((/m(,)g<< m(,)))
+M2HH_N#((m g<< m g<<))
+M2HH_D#((d/g/p/m))#((d/g<<m g<<))
+M2HHB#((g<< m, g<<))
+M2HH#((p/g/p,))#((g<< m, g<<))
+M2HR#((m(,)g<< m(,)))
+M2RZ#((m g<<)m)
+M2RL#((m g<<)m)
+M2RH#(((g<<)/p,/(g<<)m))
+M2RR#((m g<<)m)
+M3ZZ#((m(g<<) m (g<) m))#(((m(,) g(,)<</ m))m)
+M3ZL#((m(g<<) m (g<) m))#((m g<<)m)
+M3ZH#((m(g<<) m (g<) m))
+M3ZR#((m(g<<) m (g<) m))
+M3LZ#((m g<< m g<<))
+M3LL#((m g<< m,))#(((m(,) g(,)<</ m))m)
+M3LH#((g/p(,)(g<</m p)))#((g/p(,)(/g<</p m)))
+M3LR#(((m(,) g(,)<</ m))m)#(((m g<<) m g<< m))
+M3HZ#((p(,)(g p, g m)))
+M3HL#((m(,)/(g<<))/m)#(((m g<<)m g<< m))
+M3HH_S#((s↑//g/p/m))#((/m(,)g m(,)))
+M3HH_N#((m/p(,)/m(,)))
+M3HH_D#((d/g/p/m))#((d/g<<m g<<))
+M3HH#(((m) g(,))<m)#((g//p,//m))
+M3HR#(((m(,) g(,)<</ m))m)#(((m g<<) m g<< m))
+M3RZ#(((m(,) g(,)<</ m))m)#(((m g<<) m g<< m))
+M3RL#(((m g<<) m g<< m))
+M3RH__D#(((m g<<) m g<< m))
+M3RH#((g/p/g<</(p m)))#(((m g<<) m g<< m))
+M3RR#((m(m>)m(g<<)m))#(((m g<<) m g<< m))
+M4ZZ#((m(m>)m(g<<)m))#((m(g<<) m (g<) m))
+M4ZL#((m(m>)m(g<<)m))#((m(g<<) m (g<) m))
+M4ZH#((g/p/g<</(p m)))#((m(g<<) m (g<) m))
+M4ZR#((g/p/g<</(p m)))
+M4LZ#((m g<< m g<<))#(((m)g<<(m)g<<(m g<<)))
+M4LL#((m g<< m g<<))#((m(g<<) m(g<<)m))
+M4LH#((g/p(,)(/g<</p m)))#((g/p(,)((g<<)/p(,) m)))
+M4LR#((m(m>)m(g<<)m))#(((m g<<) m g<< m))
+M4HZ#((p(,)(g p, g m)))#(((p m g<<) m (g<<) m))
+M4HL#(((p m g<<<) m (g<<<) m))#((p(,)(g p, g m)))
+M4HH__D#((m(g<<) m (g<<) m))
+M4HH_N#(((n//m g<<)m(g<< m g<<)))
+M4HH__N#((m(g<<) m (g<<) m))
+M4HH#(((p m g<<) m (g<<) m))#((p/(g<<)p/(g<<)p))
+M4HR#(((p m g<<) m (g<<) m))
+M4RZ#((((g<<)m g,<<(,)(m) g,<<(,) m)))#(((m(,)g(,)<</m)(g<< m(,)(g<<)m)))
+M4RL#((m(g<<) m (g<<) m))
+M4RH__D#((m(g<<) m (g<<) m))#((g<m g<< m))
+M4RH#((g/p/g<</(p m)))#((m(g<<) m (g<<) m))
+M4RR#((m(g<<) m (g<<) m))
+M5LL#((((g)/m(,)/g/m(,)/g/ m(,)(g m))))
+N0LH#(s↑ n<)
+N0HL#(n<s↑)
+N1ZZ#((n(,)s↑ n(,)))
+N1ZL#((s↑ n(,)s↑(,)))
+N1ZH#(s↑ n)
+N1ZR#((s↑ n(,)s↑(,)))
+N1LZ#((n(,)s↑ n(,)))
+N1LL#n#((p)/n(,))
+N1LH#(s↑ n)
+N1LR#((s↑ n(,)s↑(,)))
+N1HZ#(n< s↑)
+N1HL#(s↑ (n<s↑))
+N1HH#(n< s↑)
+N1HR#((n(,)s↑ n(,)))
+N1RZ#((n(,)s↑ n(,)))
+N1RL#((n(,)s↑ n(,)))
+N1RH#(s↑ n<)
+N1RR#((n(,)s↑ n(,)))
+N2ZZ#((n<<< n<(,) n<<<(,)))
+N2ZL#((n<<< n<(,) n<<<(,)))
+N2ZH#((n<<< n<(,) n<<<(,)))
+N2ZR#((n<<< n<(,) n<<<(,)))
+N2LZ#(s↑ (n<s↑))
+N2LL#(s↑ (n<s↑))
+N2LH#(s↑ (n<s↑))
+N2LR#((n<<< n<(,) n<<<(,)))
+N2HZ#(n<<(s↑ n<<))
+N2HL#(s↑ (n<s↑))
+N2HH#(s↑ (n<s↑))
+N2HR#(s↑ (n<s↑))
+N2RZ#((n<<< n<(,) n<<<(,)))
+N2RL#((n<<< n<(,) n<<<(,)))
+N2RH#((s↑ n,<< s↑))
+N2RR#((n<<< n<(,) n<<<(,)))
+N3ZZ#((n<<< n< n<<< n<))
+N3ZL#((n<<< n< n<<< n<))
+N3ZH#((n<<< n< n<<< n<))
+N3ZR#((n<<< n< n<<< n<))
+N3LZ#((n<<< n< n<<< n<))
+N3LL#((s↑ n< n<<< n<))
+N3LH#((s↑ n< n<<< n<))
+N3LR#((s↑ n< n<<< n<))
+N3HZ#((s↑ n< n<<< n<))
+N3HL#((s↑ n< n<<< n<))
+N3HH#((s↑ n< n<<< n<))
+N3HR#((s↑ n< n<<< n<))
+N3RZ#((n<<< n< n<<< n<))
+N3RL#((n<<< n< n<<< n<))
+N3RH#((n<<< n< n<<< n<))
+N3RR#((n<<< n< n<<< n<))
+N4ZZ#((s↑ n< n<<< n<))
+N4ZL#((s↑  n< n<<< n<))
+N4ZH#((s↑ n< n<<< n<))
+N4ZR#((s↑  n< n<<< n<))
+N4LZ#((s↑(,)(n<) s↑(,)(n<<)))#((s↑(,)(n<) s↑ n<))
+N4LL#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4LH#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4LR#((s↑(,)(n<) s↑ n<))
+N4HZ#((s↑(,)(n<) s↑(,)(n<<)))#((s↑(,)(n<) s↑ n<))
+N4HL#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(n<<s↑)))
+N4HH#((s↑(,)(n<) s↑ n<))#((s↑(,)(n<) s↑(,)(n<<)))
+N4HR#((s↑,(,)(n<< )s↑))#((s↑, n<< s↑))
+N4RZ#((n<<< n< n<<< n<))
+N4RL#((n<<< n< n<<< n<))
+N4RH#((n<<< n< n<<< n<))
+N4RR#((n<<< n< n<<< n<))
+P1LL_S#(s/p)
+P1LL#p
+P1LR_D#((p>>>)p(,))
+P1LR#p
+P2HL_N#((s↑)//p(,))
+P2HL_S#((s↑)//p(,))
+P2HL#p
+P2HR#p
+P2HL_D#(((d p>>>)p,,))
+P2HL#P
+P3HR_N#((s↑)//p(,))
+P3HR_S#((s↑)//p(,))
+P3HR#p
+P3HZ_N#((s↑)//p(,))
+P3HZ#P
+P3HL_N#(((s↑))///p((,))(,))
+P3HL_S#(((s↑))///p((,))(,))
+P3HL#p
+P3HH#p
+P4HL_N#(((s↑))///p((,))(,))
+P3HL#p
+P4HH#p
+P4HL_S#(((s↑))///p((,))(,)) 
+P4HL#p
+P4HR_N#(((s↑))///p((,))(,))
+P4HR_S#(((s↑))///p((,))(,))
+P4HR#p
+P4HZ_N#(((s↑))///p((,))(,))
+P4HZ#p
+R1ZZ#((r(,)r<<r(,)))#r
+R1ZL#((r(,)r<<r(,)))#r
+R1ZH#((r g)r)#r
+R1ZR#((r(,)r<<r(,)))#r
+R1LZ#((s)r(,))
+R1LL_D#((d↓/r<< r r<<))
+R1LL#((r<<)r(r<<))
+R1LH#((g)r(,))
+R1LR#((g)r(,))
+R1HZ#((r(,) r<< r(,)))
+R1HL_P#(g/r)
+R1HL#(r (r<<< r))
+R1HH_P#(g/r)
+R1HH#((r(,) r<< r(,)))
+R1HR#((r(,) r<< r(,)))
+R1RZ#((r(,) r<< r(,)))
+R1RL#(r (r<<< r))
+R1RH#((g) r(,))
+R1RR#(r (r<<< r))
+R2ZZ#((r(,)r<<r(,)))
+R2ZL#((r(,)r<<r(,)))
+R2ZH#((r g)r)
+R2ZR#((r(,)r<<r(,)))
+R2LZ#((r(,)r<<r(,)))
+R2LL#((r<<(,)r r<<(,)))
+R2LLA#((r<<(,)r r<<(,)))#(((g r)(,)r<<(,) r))
+R2LH#((s g)r)
+R2LR#((s g)r)
+R2HZ#(r (r<< r))
+R2HZC#(r(r<< r))
+R2HZ_M#((m r r<<<r))
+R2HLC#(r(r<<<r))#(((r)/g(,) r r<<))
+R2HL_M#((m r r<<<r))
+R2HL_PS#((g)r(,))
+R2HL#(r(r<<<r))#(((r)/g(,) r r<<))
+R2HH_M#((m)r(r<<))
+R2HH#((g)r(r<<))
+R2HR_M#((m)r(r<<))
+R2HR#((g)r(r<<))
+R2RZ#((r<<)r(,))
+R2RL#((r g)r)#((r<<)r(,))
+R2RH#((r<<)r(,))
+R2RR#((r g)r)#((r<<)r(,))
+R3ZZ#(((s g) r r<<<r))#((r<<(,)r r<<(,)))
+R3ZL#((r<<(,)r r<<(,)))
+R3ZH#(((s g) r r<<<r))
+R3ZR#(((s g) r r<<<r))
+R3LZ#(((s g) r r<<<r))
+R3LL#(((r r<<<) r r<<<r))#(((s g) r r<<<r))
+R3LH#(((s g) r r<<<r))#(((s r<<<) r r<<<r))
+R3LR#(((s g) r r<<<r))
+R3HZE#((r//(g)r( g)r))
+R3HZC#((r<<(,)r r<<(,)))
+R3HZ#((r<<(,)r r<<(,)))
+R3HLC#((r(g)r r<< (r)))#((r(,)g*r (r<<)))
+R3HLE#((r,(g)r(,)))
+R3HL_PS#((g)r(,))#((g)(r, r<<))
+R3HL#((r(g)r r<< (r)))#((r(,)g*r (r<<)))
+R3HH#((r r<<< r,))#((r(r<< r)(g r)r))
+R3HHC#((r r<<< r,))#((r(r<< r)(g r)r))
+R3HR#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3HRC#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3RZ#((r<<(,)r r<<(,)))
+R3RL#((r<<(,)r r<<(,)))#((r(r<< r)(g r)r))
+R3RH#((r(r<<)r(r<<)r))#((r(r<< r)(g r)r))
+R3RR#((r<<(,)r r<<(,)))
+R4ZZ#((r<<(,)r r<<(,)))
+R4ZL#((r<<(,)r r<<(,)))
+R4ZH#(((s g) r r<<<r))
+R4ZR#((r<<(,)r r<<(,)))
+R4LZ#((s(g) r r<<<(r)))
+R4LL#(((s r<<<) r r<<<r))#(((s g) r r<<<r))
+R4LH#((s(g) r r<<<(r)))	#(((s r<<<) r r<<<r))
+R4LR#(((s g) r r<<<r))#(((s r<<<) r r<<<r))
+R4HZ#((r r<<< r r<<<))
+R4HZE#((r//(g)r( g)r))#((r//(g r g)r(,)))
+R4HLC#((r//(g)r(g)r))#((r g(r)r<<(r)))
+R4HLE#((r//(g)r( g)r))#((r g(r)r<<(r)))
+R4HL_PS#((g)r(,))
+R4HL#((r r<<< r r<<<))#((r g(r)r<<(r)))
+R4HHC#((r(g r) r<< r))
+R4HH#((r(g r) r<< r))
+R4HRC#((r r<<< r r<<<))
+R4HR#((r r<<< r r<<<))
+R4RZ#((r(r<<)r(r<<)r))
+R4RL#((r(,)(r<<)r(,)(r<<)))
+R4RH#((r(r<<)r(r<<)r))
+R4RR#((r(r<<)r(r<<)r))
+R5LH#(((s g r r<<<r r r<<< r)))
+S1HZ_G#(g\s)#s
+S1HZ#s
+S1HL_G#(g\s)#s
+S1HL#s
+S1HR_G#(g\s)#s
+S1HR#s
+S1HH_G#(g\s)#s
+S1HH#s
+S2HH_G#(g\s)#s
+S2HH#s
+S2HL_G#(g\s)#s
+S2HL#s
+S2HZ_G#(g\s)#s
+S2HZ#s
+S2HR_G#(g\s)#s
+S2HR#s
+S3HL_G#(g\s)#s
+S3HL#s
+S3HR_G#(g\s)#s
+S3HR#s
+S3HH_G#(g\s)#s
+S3HH#s
+S3HZ_G#(g\s)#s
+S3HZ#s
+S3LR_/_2#(((p↓))/s(,)((,)))
+S3LR#s
+S3LL_P_2#((p↓)//s(,))
+S3LL_/_2#(((p↓))/s(,)((,)))
+S3LL#s
+S3ZL_S_2#(((p↓))/s(,)((,)))
+S3ZL#s
+S3LH_S_2#(((p↓))/s(,)((,)))
+S3LH#s
+S3LH_/_2#(((p↓))/s(,)((,)))
+S3LH#s
+S3LZ_/_2#(((p↓))/s(,)((,)))
+S3LZ#s
+S4HL_G#((g)\s(,))#s
+S4HL#s
+S4HR_G#((g)\s(,))#s
+S4HR#s
+S4HH_G#((g)\s(,))#s
+S4HH#s
+S4HZ_G#((g)\s(,))#s
+S4HZ#s
+S4LR_/_2#((p↓)//s(,))
+S4LR#s
+S4LL_/_2#((p↓)//s(,))
+S4LL_P_2#((p↓)//s(,))
+S4LL#s
+S4ZL_S_2#((p↓)//s(,))
+S4ZL#s
+S4LH_/_2#((p↓)//s(,))
+S4LH#s
+S4LZ_/_2#((p↓)//s(,))
+S4LZ#s
+S4LZ#s
+29`;
+</script>
+<script>
+
+// === GLOBALS ===
+var actx,masterGain,compressor,analyser,convolver;
+var masterVol=0.6;
+var gamakaIntensity=0.8;
+var curOctave=1;
+var curRaga='kalyani';
+var sruthiVal=0;
+var droneOn=false;
+var droneOscs=[];
+var vizCtx,vizW,vizH;
+var playing=false,recording=false;
+var curStep=-1,nextT=0,tmr;
+var phraseHistory=[];
+var STEPS=16,RAGA_ROWS=7,SND_ROWS=7,ROWS=14;
+var grid=[],stEls=[];
+function setCell(r,c,oct){
+  if(!grid[r])return;var ov=r<RAGA_ROWS?(oct!==undefined?oct+1:curOctave+1):1;
+  grid[r][c]=ov;
+  if(stEls[r]&&stEls[r][c]){stEls[r][c].classList.remove('oct0','oct1','oct2');stEls[r][c].classList.add('on','oct'+(ov-1));}
+}
+function clearCell(r,c){
+  if(!grid[r])return;grid[r][c]=false;
+  if(stEls[r]&&stEls[r][c]){stEls[r][c].classList.remove('on','oct0','oct1','oct2');}
+}
+var SVARA_COLORS=['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad','#e84393'];
+function getSndColor(i){return sndPadStates&&sndPadStates[i]?sndPadStates[i].col:'#555'}
+function refreshSeqColors(){
+  for(var r=RAGA_ROWS;r<ROWS;r++){if(!stEls[r])continue;
+    var col=getSndColor(r-RAGA_ROWS);
+    for(var c=0;c<STEPS;c++){if(stEls[r][c])stEls[r][c].style.setProperty('--c',col)}
+  }
+}
+var SVARA_NAMES_SHORT=['S','R','G','M','P','D','N'];
+var msg,led;
+var recBufs=[];
+var sndBufs=[];
+var tempoMul=1;
+
+// === KNOB SYSTEM ===
+var knobDefs={
+  knobBPM:{min:40,max:200,val:90,step:1,fmt:function(v){return v.toFixed(0)},el:null,ind:null,kv:null},
+  knobGMK:{min:0,max:100,val:80,step:1,fmt:function(v){return v.toFixed(0)+'%'},el:null,ind:null,kv:null},
+  knobDEC:{min:0.5,max:8,val:3,step:0.1,fmt:function(v){return v.toFixed(1)},el:null,ind:null,kv:null},
+  knobREV:{min:0,max:1,val:0.30,step:0.01,fmt:function(v){return v.toFixed(2)},el:null,ind:null,kv:null}
+};
+function kv(id){return knobDefs[id].val}
+function updateKnobUI(id){
+  var k=knobDefs[id];
+  var pct=(k.val-k.min)/(k.max-k.min);
+  var deg=-135+pct*270;
+  k.ind.style.transform='rotate('+deg+'deg)';
+  k.kv.textContent=k.fmt(k.val);
+  if(id==='knobGMK')gamakaIntensity=k.val/100;
+}
+function setupKnobs(){
+  var ids=['knobBPM','knobGMK','knobDEC','knobREV'];
+  ids.forEach(function(id){
+    var k=knobDefs[id];
+    k.el=document.getElementById(id);
+    k.ind=document.getElementById('ind'+id.slice(4));
+    k.kv=document.getElementById('kv'+id.slice(4));
+    updateKnobUI(id);
+    var knobEl=k.el.querySelector('.knob');
+    var startY,startVal;
+    function onDown(e){e.preventDefault();startY=e.clientY;startVal=k.val;
+      document.addEventListener('pointermove',onMove);document.addEventListener('pointerup',onUp)}
+    function onMove(e){var dy=startY-e.clientY;var range=k.max-k.min;
+      k.val=Math.max(k.min,Math.min(k.max,startVal+dy/120*range));
+      k.val=Math.round(k.val/k.step)*k.step;updateKnobUI(id)}
+    function onUp(){document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp)}
+    knobEl.addEventListener('pointerdown',onDown);
+  });
+}
+
+// === RAGA DEFINITIONS ===
+var ragas={
+kalyani:{name:'Kalyani',melam:65,
+  aroha:'S R\u2082 G\u2083 M\u2082 P D\u2082 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2082','P','D\u2082','N\u2083'],
+  moods:['kurinji','morning'],gmkWeight:[0,0.8,0.9,0.7,0,0.85,0.95]},
+sankara:{name:'Sankarabharanam',melam:29,
+  aroha:'S R\u2082 G\u2083 M\u2081 P D\u2082 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2082','N\u2083'],
+  moods:['kurinji','morning'],gmkWeight:[0,0.7,0.8,0.6,0,0.7,0.8]},
+bhairavi:{name:'Bhairavi',melam:20,
+  aroha:'S R\u2081 G\u2082 M\u2081 P D\u2081 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2081','G\u2082','M\u2081','P','D\u2081','N\u2082'],
+  moods:['neidhal','palai'],gmkWeight:[0,1.0,0.9,0.6,0,1.0,0.9]},
+dhanyasi:{name:'Dhanyasi',melam:8,
+  aroha:'S G\u2082 M\u2081 P N\u2082',
+  svaras:[1,0,1,1,1,0,1],names:['S','R\u2081','G\u2082','M\u2081','P','D\u2081','N\u2082'],
+  moods:['neidhal','evening'],gmkWeight:[0,0,0.9,0.5,0,0,0.85]},
+hindolam:{name:'Hindholam',melam:20,
+  aroha:'S G\u2082 M\u2081 D\u2081 N\u2082',
+  svaras:[1,0,1,1,0,1,1],names:['S','-','G\u2082','M\u2081','-','D\u2081','N\u2082'],
+  moods:['palai','evening'],gmkWeight:[0,0,0.85,0.5,0,0.9,0.8]},
+kanada:{name:'Kaanada',melam:22,
+  aroha:'S R\u2082 G\u2082 M\u2081 P D\u2082 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2081','P','D\u2082','N\u2082'],
+  moods:['neidhal','evening'],gmkWeight:[0,0.8,0.95,0.6,0,0.8,0.85]},
+begada:{name:'Begada',melam:29,
+  aroha:'S G\u2083 R\u2082 G\u2083 M\u2081 P D\u2082 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2082','N\u2083'],
+  moods:['mullai','morning'],gmkWeight:[0,0.7,0.85,0.5,0,0.7,0.8]},
+kamas:{name:'Kamaas',melam:28,
+  aroha:'S R\u2082 G\u2082 M\u2081 P D\u2082 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2081','P','D\u2082','N\u2082'],
+  moods:['mullai','evening'],gmkWeight:[0,0.75,0.8,0.5,0,0.7,0.75]},
+sahana:{name:'Sahaana',melam:28,
+  aroha:'S R\u2082 G\u2083 M\u2081 P D\u2082 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2082','N\u2083'],
+  moods:['mullai','evening'],gmkWeight:[0,0.8,0.9,0.5,0,0.85,0.9]},
+kambodhi:{name:'Kambodhi',melam:28,
+  aroha:'S R\u2082 G\u2083 M\u2081 P D\u2082 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2082','N\u2083'],
+  moods:['mullai','evening'],gmkWeight:[0,0.7,0.85,0.6,0,0.8,0.85]},
+shanmuk:{name:'Shanmukhapriya',melam:56,
+  aroha:'S R\u2082 G\u2082 M\u2082 P D\u2081 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2082','P','D\u2081','N\u2082'],
+  moods:['marudam','palai'],gmkWeight:[0,0.7,0.8,0.7,0,0.9,0.85]},
+mohanam:{name:'Mohanam',melam:28,
+  aroha:'S R\u2082 G\u2083 P D\u2082',
+  svaras:[1,1,1,0,1,1,0],names:['S','R\u2082','G\u2083','-','P','D\u2082','-'],
+  moods:['kurinji','morning'],gmkWeight:[0,0.6,0.7,0,0,0.65,0]},
+hamsadhwani:{name:'Hamsadhwani',melam:29,
+  aroha:'S R\u2082 G\u2083 P N\u2083',
+  svaras:[1,1,1,0,1,0,1],names:['S','R\u2082','G\u2083','-','P','-','N\u2083'],
+  moods:['kurinji','morning'],gmkWeight:[0,0.6,0.7,0,0,0,0.75]},
+charukeshi:{name:'Charukeshi',melam:26,
+  aroha:'S R\u2082 G\u2083 M\u2081 P D\u2081 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2081','N\u2082'],
+  moods:['marudam','evening'],gmkWeight:[0,0.65,0.75,0.5,0,0.85,0.8]},
+natabhairavi:{name:'Natabhairavi',melam:20,
+  aroha:'S R\u2082 G\u2082 M\u2081 P D\u2081 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2081','P','D\u2081','N\u2082'],
+  moods:['neidhal','evening'],gmkWeight:[0,0.7,0.8,0.5,0,0.85,0.8]},
+simhendra:{name:'Simhendramadhyamam',melam:57,
+  aroha:'S R\u2082 G\u2082 M\u2082 P D\u2081 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2082','P','D\u2081','N\u2083'],
+  moods:['palai','marudam'],gmkWeight:[0,0.75,0.85,0.7,0,0.9,0.85]},
+harikambhoji:{name:'Harikambhoji',melam:28,
+  aroha:'S R\u2082 G\u2083 M\u2081 P D\u2082 N\u2082',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2083','M\u2081','P','D\u2082','N\u2082'],
+  moods:['mullai','morning'],gmkWeight:[0,0.65,0.75,0.5,0,0.7,0.7]},
+mayamalavagowla:{name:'Mayamalavagowla',melam:15,
+  aroha:'S R\u2081 G\u2083 M\u2081 P D\u2081 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2081','G\u2083','M\u2081','P','D\u2081','N\u2083'],
+  moods:['kurinji','morning'],gmkWeight:[0,0.6,0.75,0.5,0,0.6,0.75]},
+keeravani:{name:'Keeravani',melam:21,
+  aroha:'S R\u2082 G\u2082 M\u2081 P D\u2081 N\u2083',
+  svaras:[1,1,1,1,1,1,1],names:['S','R\u2082','G\u2082','M\u2081','P','D\u2081','N\u2083'],
+  moods:['palai','neidhal'],gmkWeight:[0,0.7,0.85,0.5,0,0.9,0.85]},
+abhogi:{name:'Abhogi',melam:22,
+  aroha:'S R\u2082 G\u2082 M\u2081 D\u2082',
+  svaras:[1,1,1,1,0,1,0],names:['S','R\u2082','G\u2082','M\u2081','-','D\u2082','-'],
+  moods:['mullai','evening'],gmkWeight:[0,0.7,0.85,0.6,0,0.7,0]},
+revathi:{name:'Revathi',melam:20,
+  aroha:'S R\u2081 G\u2082 M\u2081 D\u2081',
+  svaras:[1,1,1,1,0,1,0],names:['S','R\u2081','G\u2082','M\u2081','-','D\u2081','-'],
+  moods:['neidhal','palai'],gmkWeight:[0,0.9,0.85,0.5,0,0.9,0]}
+};
+
+// Mood descriptions for ticker tape
+var MOOD_DESC={
+  all:'RaGaM PaD v3.2 \u2014 carnatic electronic music \u2022 select a mood to explore ragas by emotion and landscape \u2022 tap pads to play \u2022 long-press sound pads to customize',
+  kurinji:'\u25b2 Kurinji (\u0b95\u0bc1\u0bb0\u0bbf\u0b9e\u0bcd\u0b9a\u0bbf) \u2014 Mountains & union. The ecstasy of lovers meeting. Bright ascending ragas full of joy. \u2022 Kalyani \u2022 Mohanam \u2022 Hamsadhwani \u2022 Sankarabharanam \u2022 Mayamalavagowla',
+  mullai:'\u2698 Mullai (\u0bae\u0bc1\u0bb2\u0bcd\u0bb2\u0bc8) \u2014 Forest & patience. Gentle waiting for the beloved\u2019s return. Warm pastoral ragas with tender longing. \u2022 Sahana \u2022 Kambodhi \u2022 Begada \u2022 Kamaas \u2022 Harikambhoji',
+  marudam:'\u25c6 Marudam (\u0bae\u0bb0\u0bc1\u0ba4\u0bae\u0bcd) \u2014 Farmland & tension. Lovers\u2019 quarrel, sulking, intensity. Complex dramatic ragas. \u2022 Shanmukhapriya \u2022 Charukeshi \u2022 Simhendramadhyamam',
+  neidhal:'\u2248 Neidhal (\u0ba8\u0bc6\u0baf\u0bcd\u0ba4\u0bb2\u0bcd) \u2014 Seashore & longing. Pining for the absent beloved, waves of emotion. Deep soulful ragas. \u2022 Bhairavi \u2022 Kanada \u2022 Dhanyasi \u2022 Natabhairavi',
+  palai:'\u25cb Palai (\u0baa\u0bbe\u0bb2\u0bc8) \u2014 Desert & separation. The hardship of parting, desolation. Stark melancholic ragas. \u2022 Bhairavi \u2022 Hindolam \u2022 Simhendramadhyamam \u2022 Keeravani',
+  morning:'\u2600 Morning ragas \u2014 Fresh bright energy for dawn. Uplifting melodies to greet the day. \u2022 Kalyani \u2022 Mohanam \u2022 Hamsadhwani \u2022 Sankarabharanam \u2022 Begada \u2022 Harikambhoji \u2022 Mayamalavagowla',
+  evening:'\u263e Evening ragas \u2014 Reflective deeper tones as dusk falls. Contemplative melodies for twilight. \u2022 Sahana \u2022 Kambodhi \u2022 Kamaas \u2022 Dhanyasi \u2022 Hindolam \u2022 Kanada \u2022 Charukeshi \u2022 Natabhairavi'
+};
+function updateTicker(mood){
+  var el=document.getElementById('moodDesc');
+  if(el)el.textContent=MOOD_DESC[mood]||MOOD_DESC.all;
+}
+
+// Mood filter
+var curMood='all';
+function filterRagasByMood(mood){
+  curMood=mood;
+  updateTicker(mood);
+  var sel=document.getElementById('ragaSel');
+  var cur=sel.value;sel.innerHTML='';
+  var found=false;
+  Object.keys(ragas).forEach(function(key){
+    var r=ragas[key];
+    if(mood==='all'||r.moods.indexOf(mood)>=0){
+      var opt=document.createElement('option');opt.value=key;opt.textContent=r.name;
+      if(key===cur){opt.selected=true;found=true}
+      sel.appendChild(opt);
+    }
+  });
+  if(!found&&sel.options.length>0){sel.selectedIndex=0;selectRaga(sel.value)}
+}
+
+// === 72 MELAM FREQUENCY SYSTEM ===
+var basicfr=[5233,5513,5887,6202,5887,6202,6541,6977,7442,7849,8269,8721,9303,8721,9303,9934,10466];
+var purv=[[1,4],[1,5],[1,6],[2,5],[2,6],[3,6]];
+var uth=[[10,13],[10,14],[10,15],[11,14],[11,15],[12,15]];
+
+function getMelamFreqs(melam){
+  var tm=melam,ma=7;
+  if(melam>36){tm=melam-36;ma=8}
+  var chak=Math.floor((tm-1)/6),pos=(tm-1)%6;
+  return[basicfr[0],basicfr[purv[chak][0]],basicfr[purv[chak][1]],
+         basicfr[ma],basicfr[9],basicfr[uth[pos][0]],basicfr[uth[pos][1]]];
+}
+
+function getSvaraFreq(svaraIdx,octave){
+  var raga=ragas[curRaga];
+  var freqs=getMelamFreqs(raga.melam);
+  var frMul=Math.pow(1.0594631,sruthiVal)/40;
+  var octMul=octave===0?0.5:octave===2?2:1;
+  return freqs[svaraIdx]*frMul*octMul;
+}
+
+// === VEENA PERIODIC WAVE ===
+var vnWave1,vnWave2,vnWave3;
+function createWaves(){
+  var r1=new Float32Array([0,2,40,50,80,70,60,40,30,30,25,20,10,5]);
+  var i1=new Float32Array(r1.length);
+  var r2=new Float32Array([0,10,20,18,20,6,13,10,10,2]);
+  var i2=new Float32Array(r2.length);
+  var r3=new Float32Array([0,13,20,11,5,5]);
+  var i3=new Float32Array(r3.length);
+  vnWave1=actx.createPeriodicWave(r1,i1);
+  vnWave2=actx.createPeriodicWave(r2,i2);
+  vnWave3=actx.createPeriodicWave(r3,i3);
+}
+function getWave(f){return f<150?vnWave1:f<280?vnWave2:vnWave3}
+
+// === REVERB IR ===
+function genReverbIR(){
+  var len=actx.sampleRate*2;
+  var buf=actx.createBuffer(2,len,actx.sampleRate);
+  for(var ch=0;ch<2;ch++){
+    var d=buf.getChannelData(ch);
+    for(var i=0;i<len;i++){
+      d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);
+    }
+  }
+  convolver=actx.createConvolver();
+  convolver.buffer=buf;
+}
+
+// === GAMAKA ENGINE ===
+var gmkarr={};
+function initGmkData(){
+  var names=['dhanyasi','hindolam','bhairavi','kanada','begada','kamas','sahana','sankara','kalyani','kambodhi','shanmuk'];
+  for(var i=0;i<names.length;i++){
+    if(gmkdata[names[i]])gmkarr[names[i]]=gmkdata[names[i]].split('\n');
+  }
+}
+
+var noteOrder=['S','R','G','M','P','D','N'];
+function getDir(cur,prev){
+  if(prev===null||prev===undefined)return 'Z';
+  if(cur===prev)return 'R';
+  return cur>prev?'H':'L';
+}
+
+function lookupGamaka(ragaName,noteIdx,durRange,prevDir,nextDir){
+  var arr=gmkarr[ragaName];
+  if(!arr)return null;
+  var noteCh=noteOrder[noteIdx];
+  var code=noteCh+durRange+prevDir+nextDir;
+  for(var i=0;i<arr.length;i++){
+    if(arr[i].substr(0,4)===code){var p=arr[i].split('#');if(p.length>1)return p[1]}
+  }
+  code=noteCh+durRange+prevDir+'Z';
+  for(var i=0;i<arr.length;i++){
+    if(arr[i].substr(0,4)===code){var p=arr[i].split('#');if(p.length>1)return p[1]}
+  }
+  for(var d=1;d<=4;d++){
+    code=noteCh+d+prevDir+'Z';
+    for(var i=0;i<arr.length;i++){
+      if(arr[i].substr(0,4)===code){var p=arr[i].split('#');if(p.length>1)return p[1]}
+    }
+  }
+  return null;
+}
+
+function parseGamakaPattern(pattern,baseFreq,duration,svaraIdx){
+  if(!pattern||gamakaIntensity<0.05)return null;
+  var raga=ragas[curRaga];
+  var freqs=getMelamFreqs(raga.melam);
+  var frMul=Math.pow(1.0594631,sruthiVal)/40;
+  var octMul=curOctave===0?0.5:curOctave===2?2:1;
+  var noteMap={};
+  var nch='srgmpdn';
+  for(var i=0;i<7;i++){
+    noteMap[nch[i]]=freqs[i]*frMul*octMul;
+    noteMap[nch[i].toUpperCase()]=freqs[i]*frMul*octMul;
+  }
+  noteMap['s\u2191']=freqs[0]*frMul*octMul*2;
+  noteMap['S\u2191']=freqs[0]*frMul*octMul*2;
+  var notes=[];
+  var i=0;
+  while(i<pattern.length){
+    var ch=pattern[i];
+    if(nch.indexOf(ch.toLowerCase())>=0){
+      var note=ch;
+      if(i+1<pattern.length){
+        if(pattern[i+1]==='\u2191'||pattern[i+1]==='\u2193'){note+=pattern[i+1];i++}
+        while(i+1<pattern.length&&'*<>'.indexOf(pattern[i+1])>=0)i++;
+      }
+      var f=noteMap[note]||noteMap[note.toLowerCase()];
+      if(f)notes.push(f);else notes.push(baseFreq);
+    }else if(ch===','){
+      if(notes.length>0)notes.push(notes[notes.length-1]);
+    }
+    i++;
+  }
+  if(notes.length<2)return null;
+  var targets=[];
+  var timePerNote=duration/notes.length;
+  for(var i=0;i<notes.length;i++){
+    var f=baseFreq+(notes[i]-baseFreq)*gamakaIntensity;
+    targets.push({time:i*timePerNote,freq:f});
+  }
+  targets.push({time:duration,freq:baseFreq+(notes[notes.length-1]-baseFreq)*gamakaIntensity});
+  return targets;
+}
+
+function getSimpleGamaka(svaraIdx,baseFreq,duration){
+  if(gamakaIntensity<0.05)return null;
+  if(svaraIdx===0||svaraIdx===4)return null;
+  var raga=ragas[curRaga];
+  // Per-note gamaka weight
+  var noteWeight=raga.gmkWeight?raga.gmkWeight[svaraIdx]:0.7;
+  if(noteWeight<0.05)return null;
+  var freqs=getMelamFreqs(raga.melam);
+  var frMul=Math.pow(1.0594631,sruthiVal)/40;
+  var octMul=curOctave===0?0.5:curOctave===2?2:1;
+  var neighborIdx=svaraIdx<4?svaraIdx+1:svaraIdx-1;
+  if(neighborIdx<0||neighborIdx>6)return null;
+  var neighborFreq=freqs[neighborIdx]*frMul*octMul;
+  var delta=(neighborFreq-baseFreq)*gamakaIntensity*noteWeight*0.5;
+  var targets=[];
+  var n=6;
+  for(var i=0;i<n;i++){
+    targets.push({time:i*duration/n,freq:baseFreq+(i%2===0?delta:0)});
+  }
+  targets.push({time:duration,freq:baseFreq});
+  return targets;
+}
+
+// === PLAY RAGA NOTE (svara pad) ===
+function playNote(svaraIdx,pitchShift,decay,reverbAmt,octOverride){
+  if(!actx)return;
+  var oct=(octOverride!==undefined)?octOverride:curOctave;
+  var freq=getSvaraFreq(svaraIdx,oct);
+  if(pitchShift)freq*=Math.pow(2,pitchShift/12);
+  var duration=Math.min(decay||kv('knobDEC'),stepDur()*3);
+  var prevIdx=phraseHistory.length>0?phraseHistory[phraseHistory.length-1]:null;
+  var prevDir=getDir(svaraIdx,prevIdx);
+  var gmkPattern=lookupGamaka(curRaga,svaraIdx,2,prevDir,'Z');
+  var targets=null;
+  if(gmkPattern)targets=parseGamakaPattern(gmkPattern,freq,duration*0.8,svaraIdx);
+  if(!targets)targets=getSimpleGamaka(svaraIdx,freq,duration*0.8);
+  var osc=actx.createOscillator();
+  var gain=actx.createGain();
+  osc.setPeriodicWave(getWave(freq));
+  osc.connect(gain);
+  var dry=actx.createGain();
+  dry.gain.value=1-(reverbAmt||kv('knobREV'));
+  gain.connect(dry);
+  dry.connect(compressor);
+  if(convolver){
+    var wet=actx.createGain();
+    wet.gain.value=reverbAmt||kv('knobREV');
+    gain.connect(wet);
+    wet.connect(convolver);
+    convolver.connect(compressor);
+  }
+  var now=actx.currentTime;
+  osc.frequency.value=freq;
+  if(targets){
+    for(var i=0;i<targets.length;i++){
+      osc.frequency.linearRampToValueAtTime(targets[i].freq,now+targets[i].time);
+    }
+  }
+  gain.gain.setValueAtTime(0.001,now);
+  gain.gain.linearRampToValueAtTime(masterVol*0.45,now+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+duration+1);
+  osc.start(now);
+  osc.stop(now+duration+1.1);
+  phraseHistory.push(svaraIdx);
+  if(phraseHistory.length>8)phraseHistory.shift();
+}
+
+// === genSoundBuf — synth engine ===
+function genSoundBuf(freq,sndType){
+  var dur=1.5,sr=actx.sampleRate,len=sr*dur|0;
+  var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);var w=2*Math.PI*freq/sr;
+  if(sndType==='synth'){
+    for(var i=0;i<len;i++){var t=i/sr;var env=Math.exp(-t*3);
+      d[i]=(Math.sin(w*i)*0.4+Math.sin(w*1.003*i)*0.3+Math.sin(w*2*i)*0.15)*env}
+  }else if(sndType==='bass'){
+    for(var i=0;i<len;i++){var t=i/sr;var env=Math.exp(-t*2);
+      d[i]=(Math.sin(w*0.5*i)*0.5+((2*((w*i/(2*Math.PI))%1)-1))*0.2)*env}
+  }else if(sndType==='bell'){
+    var mRatio=3.5,mAmt=freq*2;
+    for(var i=0;i<len;i++){var t=i/sr;var env=Math.exp(-t*1.8);
+      var mod=Math.sin(w*mRatio*i)*mAmt*Math.exp(-t*4);
+      d[i]=Math.sin(w*i+mod)*0.4*env}
+  }else if(sndType==='pad'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      var atk=Math.min(1,t*5);var env=atk*Math.exp(-t*0.8);
+      d[i]=(Math.sin(w*i)*0.2+Math.sin(w*1.003*i)*0.2+Math.sin(w*0.998*i)*0.2+Math.sin(w*2*i)*0.1)*env}
+  }else if(sndType==='pluck'){
+    var period=Math.round(sr/freq);
+    var noise=new Float32Array(period);
+    for(var i=0;i<period;i++)noise[i]=(Math.random()*2-1)*0.6;
+    d[0]=noise[0];if(len>1)d[1]=noise[1%period];
+    for(var i=2;i<len;i++){
+      var idx=i%period;
+      if(i<period)d[i]=noise[idx];
+      else d[i]=(d[i-period]+d[i-period+1])*0.498;
+    }
+  }else if(sndType==='violin'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      var vib=1+Math.sin(t*6*Math.PI*2)*0.005;
+      var env=Math.min(1,t*12)*Math.exp(-t*1.5);
+      d[i]=(Math.sin(w*i*vib)*0.4+Math.sin(w*2*i*vib)*0.25+Math.sin(w*3*i*vib)*0.15+Math.sin(w*4*i*vib)*0.08)*env*0.6}
+  }else if(sndType==='viola'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      var vib=1+Math.sin(t*5.5*Math.PI*2)*0.006;
+      var env=Math.min(1,t*10)*Math.exp(-t*1.2);
+      d[i]=(Math.sin(w*i*vib)*0.5+Math.sin(w*2*i*vib)*0.3+Math.sin(w*3*i*vib)*0.12+Math.sin(w*1.5*i*vib)*0.1)*env*0.65}
+  }else if(sndType==='cello'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      var vib=1+Math.sin(t*4.5*Math.PI*2)*0.007;
+      var env=Math.min(1,t*8)*Math.exp(-t*1.0);
+      d[i]=(Math.sin(w*i*vib)*0.6+Math.sin(w*2*i*vib)*0.25+Math.sin(w*0.5*i*vib)*0.15+Math.sin(w*3*i*vib)*0.08)*env*0.7}
+  }else if(sndType==='doublebass'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      var env=Math.min(1,t*6)*Math.exp(-t*0.9);
+      d[i]=(Math.sin(w*i)*0.7+Math.sin(w*0.5*i)*0.25+Math.sin(w*2*i)*0.1)*env*0.75}
+  }else if(sndType==='subbass'){
+    for(var i=0;i<len;i++){var t=i/sr;d[i]=Math.sin(w*i)*0.8*Math.exp(-t*1.5)}
+  }else if(sndType==='basspluck'){
+    for(var i=0;i<len;i++){var t=i/sr;
+      d[i]=(Math.sin(w*i)*0.6+Math.sin(w*2*i)*0.2+Math.exp(-t*50)*0.3)*Math.exp(-t*3)*0.7}
+  }
+  return buf;
+}
+
+// === DRUM SYNTHESIS ===
+function genDrumBuf(type){
+  var sr=actx.sampleRate;
+  if(type==='kick'){
+    var len=sr*0.4|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+    for(var i=0;i<len;i++){var t=i/sr;
+      var freq=150*Math.exp(-t*25)+30;
+      d[i]=Math.sin(2*Math.PI*freq*t)*Math.exp(-t*6)*0.8}
+    return buf;
+  }else if(type==='snare'){
+    var len=sr*0.15|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+    for(var i=0;i<len;i++){var t=i/sr;
+      d[i]=((Math.random()*2-1)*0.6+Math.sin(2*Math.PI*180*t)*0.4)*Math.exp(-t*15)}
+    return buf;
+  }else if(type==='hat'){
+    var len=sr*0.06|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+    for(var i=0;i<len;i++){var t=i/sr;
+      d[i]=(Math.random()*2-1)*Math.exp(-t*50)*0.4}
+    return buf;
+  }else if(type==='clap'){
+    var len=sr*0.12|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+    for(var i=0;i<len;i++){var t=i/sr;
+      var burst=(t<0.01||t>0.015&&t<0.025||t>0.03&&t<0.04)?1:0.3;
+      d[i]=(Math.random()*2-1)*burst*Math.exp(-t*12)*0.5}
+    return buf;
+  }
+  return actx.createBuffer(1,sr*0.1|0,sr);
+}
+
+// === PLAY SOUND PAD NOTE ===
+function playSndPad(sndIdx){
+  if(!actx)return;
+  var ps=sndPadStates[sndIdx];if(!ps||ps.type==='empty')return;
+  var buf=ps.buf;if(!buf)return;
+  var src=actx.createBufferSource();
+  src.buffer=buf;
+  var gain=actx.createGain();
+  gain.gain.value=masterVol*0.5;
+  src.connect(gain);
+  var dry=actx.createGain();
+  dry.gain.value=1-kv('knobREV');
+  gain.connect(dry);dry.connect(compressor);
+  if(convolver){
+    var wet=actx.createGain();
+    wet.gain.value=kv('knobREV');
+    gain.connect(wet);wet.connect(convolver);convolver.connect(compressor);
+  }
+  src.start();
+}
+
+// === TANBURA DRONE ===
+function startDrone(){
+  if(!actx)return;
+  var sa=getSvaraFreq(0,1);
+  var pa=getSvaraFreq(4,1);
+  var saLow=sa*0.5;
+  var dFreqs=[saLow,pa,sa,sa];
+  var dGains=[0.08,0.06,0.08,0.04];
+  for(var i=0;i<4;i++){
+    var osc=actx.createOscillator();
+    var gain=actx.createGain();
+    osc.type='triangle';
+    osc.frequency.value=dFreqs[i];
+    gain.gain.value=dGains[i]*masterVol;
+    var lfo=actx.createOscillator();
+    var lfoGain=actx.createGain();
+    lfo.frequency.value=0.4+i*0.12;
+    lfoGain.gain.value=dGains[i]*masterVol*0.25;
+    lfo.connect(lfoGain);lfoGain.connect(gain.gain);lfo.start();
+    osc.connect(gain);gain.connect(masterGain);osc.start();
+    droneOscs.push({osc:osc,gain:gain,lfo:lfo});
+  }
+}
+function stopDrone(){
+  for(var i=0;i<droneOscs.length;i++){try{droneOscs[i].osc.stop();droneOscs[i].lfo.stop()}catch(e){}}
+  droneOscs=[];
+}
+function toggleDrone(){
+  if(!actx)initAudio();
+  droneOn=!droneOn;
+  var btn=document.getElementById('droneBtn');
+  if(droneOn){startDrone();btn.classList.add('on')}
+  else{stopDrone();btn.classList.remove('on')}
+}
+
+// === VISUALIZER (6 modes) ===
+var vizMode='radial';
+var particles=[];
+var lissPhase=0;
+var mirrorAngle=0;
+
+function drawViz(){
+  if(!vizCtx||!analyser){requestAnimationFrame(drawViz);return}
+  var canvas=document.getElementById('vizCanvas');
+  vizW=canvas.width;vizH=canvas.height;
+  var cx=vizW/2,cy=vizH/2;
+  var fd=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(fd);
+  var td=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteTimeDomainData(td);
+  var avg=0;for(var i=0;i<fd.length;i++)avg+=fd[i];avg/=(fd.length*255);
+
+  if(vizMode==='radial'){
+    vizCtx.clearRect(0,0,vizW,vizH);
+    var maxR=Math.min(cx,cy)*.85,n=fd.length;
+    for(var i=0;i<n;i++){var v=fd[i]/255;var a=(i/n)*Math.PI*2-Math.PI/2;
+      var r1=maxR*.25,r2=r1+v*maxR*.75;
+      vizCtx.strokeStyle='hsla('+(0+i/n*30)+',65%,'+(30+v*45)+'%,'+(0.6+v*.4)+')';
+      vizCtx.lineWidth=Math.max(1,(vizW/n)*1.5);
+      vizCtx.beginPath();vizCtx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
+      vizCtx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);vizCtx.stroke()}
+    vizCtx.strokeStyle='#e9456077';vizCtx.lineWidth=1.5;vizCtx.beginPath();
+    for(var i=0;i<td.length;i++){var v=(td[i]-128)/128;var a=(i/td.length)*Math.PI*2-Math.PI/2;
+      var r=maxR*.25+v*maxR*.15;i===0?vizCtx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):vizCtx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}
+    vizCtx.closePath();vizCtx.stroke();
+    var grd=vizCtx.createRadialGradient(cx,cy,0,cx,cy,maxR*.3);
+    grd.addColorStop(0,'hsla(350,55%,'+(10+avg*60)+'%,'+(0.15+avg*.7)+')');grd.addColorStop(1,'transparent');
+    vizCtx.fillStyle=grd;vizCtx.fillRect(0,0,vizW,vizH);
+
+  }else if(vizMode==='bars'){
+    vizCtx.fillStyle='#080809';vizCtx.fillRect(0,0,vizW,vizH);
+    var bars=64,bw=vizW/bars,gap=1;
+    for(var i=0;i<bars;i++){
+      var bin=Math.floor(i/bars*fd.length);
+      var v=fd[bin]/255;var h=v*vizH*0.9;
+      var hue=350+i/bars*30;
+      vizCtx.fillStyle='hsla('+hue+',70%,'+(25+v*40)+'%,'+(0.7+v*0.3)+')';
+      vizCtx.fillRect(i*bw+gap,vizH-h,bw-gap*2,h);
+      vizCtx.fillStyle='hsla('+hue+',70%,'+(25+v*40)+'%,'+(0.12+v*0.12)+')';
+      vizCtx.fillRect(i*bw+gap,vizH,bw-gap*2,h*0.3);
+    }
+    vizCtx.strokeStyle='#e9456055';vizCtx.lineWidth=1;vizCtx.beginPath();
+    for(var i=0;i<bars;i++){
+      var bin=Math.floor(i/bars*fd.length);var v=fd[bin]/255;
+      var y=vizH-v*vizH*0.9;
+      i===0?vizCtx.moveTo(i*bw+bw/2,y):vizCtx.lineTo(i*bw+bw/2,y);
+    }vizCtx.stroke();
+
+  }else if(vizMode==='scope'){
+    vizCtx.fillStyle='#080809';vizCtx.fillRect(0,0,vizW,vizH);
+    vizCtx.strokeStyle='#111';vizCtx.lineWidth=1;
+    for(var y=0;y<vizH;y+=vizH/4){vizCtx.beginPath();vizCtx.moveTo(0,y);vizCtx.lineTo(vizW,y);vizCtx.stroke()}
+    vizCtx.strokeStyle='#1a1a1a';vizCtx.beginPath();vizCtx.moveTo(0,cy);vizCtx.lineTo(vizW,cy);vizCtx.stroke();
+    vizCtx.strokeStyle='#e9456022';vizCtx.lineWidth=8;vizCtx.beginPath();
+    for(var i=0;i<td.length;i++){var v=(td[i]-128)/128;var x=i/td.length*vizW;var y=cy+v*cy*0.8;
+      i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y)}vizCtx.stroke();
+    vizCtx.strokeStyle='hsla(350,65%,'+(40+avg*30)+'%,'+(0.7+avg*0.3)+')';vizCtx.lineWidth=2.5;vizCtx.beginPath();
+    for(var i=0;i<td.length;i++){var v=(td[i]-128)/128;var x=i/td.length*vizW;var y=cy+v*cy*0.8;
+      i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y)}vizCtx.stroke();
+
+  }else if(vizMode==='lissajous'){
+    vizCtx.fillStyle='rgba(8,8,9,0.15)';vizCtx.fillRect(0,0,vizW,vizH);
+    lissPhase+=0.003+avg*0.01;
+    var offset=Math.floor(td.length*0.25);
+    vizCtx.strokeStyle='hsla('+(350+lissPhase*10%60)+',65%,'+(35+avg*35)+'%,0.8)';
+    vizCtx.lineWidth=2;vizCtx.beginPath();
+    for(var i=0;i<td.length-offset;i++){
+      var x=cx+(td[i]-128)/128*cx*0.8;
+      var y=cy+(td[i+offset]-128)/128*cy*0.8;
+      i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y);
+    }vizCtx.stroke();
+    var offset2=Math.floor(td.length*0.5);
+    vizCtx.strokeStyle='hsla('+(200+lissPhase*5%40)+',50%,'+(30+avg*30)+'%,0.5)';
+    vizCtx.lineWidth=1.5;vizCtx.beginPath();
+    for(var i=0;i<td.length-offset2;i++){
+      var x=cx+(td[i]-128)/128*cx*0.6;
+      var y=cy+(td[i+offset2]-128)/128*cy*0.6;
+      i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y);
+    }vizCtx.stroke();
+    var grd=vizCtx.createRadialGradient(cx,cy,0,cx,cy,30+avg*50);
+    grd.addColorStop(0,'hsla(350,50%,30%,'+(avg*0.3)+')');grd.addColorStop(1,'transparent');
+    vizCtx.fillStyle=grd;vizCtx.fillRect(cx-80,cy-80,160,160);
+
+  }else if(vizMode==='particles'){
+    vizCtx.fillStyle='rgba(8,8,9,0.12)';vizCtx.fillRect(0,0,vizW,vizH);
+    var energy=avg*5;
+    for(var i=0;i<Math.ceil(energy*3);i++){
+      if(particles.length>300)break;
+      var band=Math.floor(Math.random()*fd.length);
+      var v=fd[band]/255;
+      if(v<0.15)continue;
+      particles.push({x:cx,y:cy,vx:(Math.random()-0.5)*v*8,vy:(Math.random()-0.5)*v*8,
+        life:1,decay:0.01+Math.random()*0.02,size:1+v*4,hue:350+band/fd.length*30});
+    }
+    for(var i=particles.length-1;i>=0;i--){
+      var p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vx*=0.98;p.vy*=0.98;p.life-=p.decay;
+      if(p.life<=0){particles.splice(i,1);continue}
+      vizCtx.fillStyle='hsla('+p.hue+',70%,'+(40+p.life*30)+'%,'+Math.min(1,p.life*1.3)+')';
+      vizCtx.beginPath();vizCtx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);vizCtx.fill();
+    }
+    var bassAvg=0;for(var i=0;i<8;i++)bassAvg+=fd[i];bassAvg/=8*255;
+    if(bassAvg>0.2){
+      vizCtx.strokeStyle='hsla(350,50%,40%,'+(bassAvg*0.3)+')';
+      vizCtx.lineWidth=2;vizCtx.beginPath();
+      vizCtx.arc(cx,cy,20+bassAvg*80,0,Math.PI*2);vizCtx.stroke();
+    }
+
+  }else if(vizMode==='mirror'){
+    vizCtx.fillStyle='rgba(8,8,9,0.08)';vizCtx.fillRect(0,0,vizW,vizH);
+    mirrorAngle+=0.005+avg*0.02;
+    var segs=6;
+    vizCtx.save();vizCtx.translate(cx,cy);
+    for(var seg=0;seg<segs;seg++){
+      vizCtx.save();
+      vizCtx.rotate(seg*Math.PI*2/segs+mirrorAngle);
+      vizCtx.strokeStyle='hsla('+(350+seg*10)+',65%,'+(30+avg*35)+'%,0.7)';
+      vizCtx.lineWidth=2;vizCtx.beginPath();
+      var pts=32;
+      for(var i=0;i<pts;i++){
+        var bin=Math.floor(i/pts*fd.length*0.5);
+        var v=fd[bin]/255;
+        var x=i*4;var y=-v*60;
+        i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y);
+      }vizCtx.stroke();
+      vizCtx.scale(1,-1);
+      vizCtx.strokeStyle='hsla('+(200+seg*10)+',50%,'+(25+avg*30)+'%,0.5)';
+      vizCtx.beginPath();
+      for(var i=0;i<pts;i++){
+        var bin=Math.floor(i/pts*fd.length*0.5);
+        var v=fd[bin]/255;
+        var x=i*4;var y=-v*60;
+        i===0?vizCtx.moveTo(x,y):vizCtx.lineTo(x,y);
+      }vizCtx.stroke();
+      vizCtx.restore();
+    }
+    vizCtx.restore();
+    var grd=vizCtx.createRadialGradient(cx,cy,0,cx,cy,40+avg*60);
+    grd.addColorStop(0,'hsla(350,50%,25%,'+(0.1+avg*0.4)+')');grd.addColorStop(1,'transparent');
+    vizCtx.fillStyle=grd;vizCtx.fillRect(0,0,vizW,vizH);
+  }
+  requestAnimationFrame(drawViz);
+}
+
+// === SEQUENCER ===
+function buildSeq(){
+  var seqEl=document.getElementById('seq');
+  seqEl.innerHTML='';
+  for(var r=0;r<ROWS;r++){
+    grid[r]=[];stEls[r]=[];
+    // Insert separator between raga and sound rows
+    if(r===RAGA_ROWS){
+      var sep=document.createElement('div');
+      sep.className='seq-sep';
+      seqEl.appendChild(sep);
+    }
+    for(var c=0;c<STEPS;c++){
+      (function(r,c){
+        grid[r][c]=false;
+        var d=document.createElement('div');
+        var col=r<RAGA_ROWS?SVARA_COLORS[r]:getSndColor(r-RAGA_ROWS);
+        d.className='st'+(c%4===0?' bk':'');
+        d.style.setProperty('--c',col);
+        d.addEventListener('pointerdown',function(e){
+          e.preventDefault();
+          if(!actx)initAudio();
+          saveGridState();
+          if(grid[r][c]){grid[r][c]=false;d.className='st'+(c%4===0?' bk':'');d.style.setProperty('--c',r<RAGA_ROWS?SVARA_COLORS[r]:getSndColor(r-RAGA_ROWS));}
+          else{
+            var ov=r<RAGA_ROWS?curOctave+1:1;
+            grid[r][c]=ov;
+            d.classList.add('on','oct'+(ov-1));
+            if(r<RAGA_ROWS)playNote(r,0,0.3,0.1,ov-1);
+            else playSndPad(r-RAGA_ROWS);
+          }
+        });
+        seqEl.appendChild(d);stEls[r][c]=d;
+      })(r,c);
+    }
+  }
+}
+
+// === PLAYBACK MODES ===
+var playMode='linear';
+var bounceDir=1;
+var pendulumPhase=0;
+var stepCount=0;
+var spiralRow=0;
+var multiRateCounters=[];
+
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.pm').forEach(function(pm){
+    pm.addEventListener('click',function(){
+      document.querySelectorAll('.pm').forEach(function(q){q.classList.remove('on')});
+      pm.classList.add('on');
+      playMode=pm.getAttribute('data-pm');
+      bounceDir=1;pendulumPhase=0;stepCount=0;spiralRow=0;
+      multiRateCounters=[];
+      for(var r=0;r<ROWS;r++)multiRateCounters.push(0);
+      msg.textContent='mode: '+playMode;
+    });
+  });
+});
+
+// Game of Life
+function lifeStep(){
+  var next=[];
+  for(var r=0;r<ROWS;r++){
+    next[r]=[];
+    for(var c=0;c<STEPS;c++){
+      var n=0;
+      for(var dr=-1;dr<=1;dr++)for(var dc=-1;dc<=1;dc++){
+        if(dr===0&&dc===0)continue;
+        var nr=(r+dr+ROWS)%ROWS,nc=(c+dc+STEPS)%STEPS;
+        if(grid[nr]&&grid[nr][nc])n++;
+      }
+      if(grid[r][c])next[r][c]=(n===2||n===3)?grid[r][c]:false;
+      else next[r][c]=(n===3)?(r<RAGA_ROWS?rndOct()+1:1):false;
+    }
+  }
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<STEPS;c++){
+      var was=grid[r][c],now=next[r][c];
+      grid[r][c]=now;
+      if(stEls[r]&&stEls[r][c]){
+        stEls[r][c].classList.remove('on','oct0','oct1','oct2');
+        if(now){stEls[r][c].classList.add('on','oct'+((now||1)-1));}
+        if(now&&!was){stEls[r][c].classList.add('born');setTimeout((function(el){return function(){el.classList.remove('born')}})(stEls[r][c]),300)}
+        if(!now&&was){stEls[r][c].classList.add('dying');setTimeout((function(el){return function(){el.classList.remove('dying')}})(stEls[r][c]),300)}
+      }
+    }
+  }
+}
+
+function stepDur(){return 60/kv('knobBPM')/4/tempoMul}
+
+function nextStepIdx(){
+  if(playMode==='bounce'){
+    curStep+=bounceDir;
+    if(curStep>=STEPS){curStep=STEPS-2;bounceDir=-1}
+    if(curStep<0){curStep=0;bounceDir=1}
+    return curStep;
+  }
+  if(playMode==='random'){curStep=Math.floor(Math.random()*STEPS);return curStep}
+  if(playMode==='pendulum'){
+    pendulumPhase+=0.18;
+    curStep=Math.round((Math.sin(pendulumPhase)*0.5+0.5)*(STEPS-1));
+    return curStep;
+  }
+  curStep=(curStep+1)%STEPS;
+  return curStep;
+}
+
+function sched(){
+  while(nextT<actx.currentTime+0.1){
+    var dd=kv('knobDEC'),rr=kv('knobREV');
+
+    if(playMode==='multi-rate'){
+      // Each row has its own divisor
+      var divs=[1,1,2,2,3,3,4,1,2,2,3,3,4,4];
+      curStep=(curStep+1)%STEPS;
+      for(var r=0;r<ROWS;r++){
+        if(!multiRateCounters[r])multiRateCounters[r]=0;
+        multiRateCounters[r]++;
+        var div=divs[r%divs.length];
+        if(multiRateCounters[r]%div!==0)continue;
+        var c=Math.floor(curStep/div)%STEPS;
+        if(grid[r]&&grid[r][c]){
+          if(r<RAGA_ROWS){var go=grid[r][c]-1;playNote(r,0,Math.min(dd,stepDur()*3),rr,go);}
+          else playSndPad(r-RAGA_ROWS);
+        }
+      }
+      (function(s){var dt=Math.max(0,(nextT-actx.currentTime)*1000);
+        setTimeout(function(){
+          for(var rr2=0;rr2<ROWS;rr2++)if(stEls[rr2])for(var cc=0;cc<STEPS;cc++)
+            if(stEls[rr2][cc])stEls[rr2][cc].classList.toggle('cur',cc===s);
+        },dt);
+      })(curStep);
+    }else if(playMode==='spiral'){
+      curStep=(curStep+1)%STEPS;
+      spiralRow=(spiralRow+1)%ROWS;
+      // Only play current row at current step
+      if(grid[spiralRow]&&grid[spiralRow][curStep]){
+        if(spiralRow<RAGA_ROWS){var go=grid[spiralRow][curStep]-1;playNote(spiralRow,0,Math.min(dd,stepDur()*3),rr,go);}
+        else playSndPad(spiralRow-RAGA_ROWS);
+      }
+      (function(s,sr){var dt=Math.max(0,(nextT-actx.currentTime)*1000);
+        setTimeout(function(){
+          for(var rr2=0;rr2<ROWS;rr2++)if(stEls[rr2])for(var cc=0;cc<STEPS;cc++)
+            if(stEls[rr2][cc])stEls[rr2][cc].classList.toggle('cur',cc===s&&rr2===sr);
+        },dt);
+      })(curStep,spiralRow);
+    }else if(playMode==='life'){
+      var s=nextStepIdx();
+      for(var r=0;r<ROWS;r++){
+        if(grid[r]&&grid[r][s]){
+          if(r<RAGA_ROWS){var go=grid[r][s]-1;playNote(r,0,Math.min(dd,stepDur()*3),rr,go);}
+          else playSndPad(r-RAGA_ROWS);
+        }
+      }
+      (function(s){var dt=Math.max(0,(nextT-actx.currentTime)*1000);
+        setTimeout(function(){
+          for(var rr2=0;rr2<ROWS;rr2++)if(stEls[rr2])for(var cc=0;cc<STEPS;cc++)
+            if(stEls[rr2][cc])stEls[rr2][cc].classList.toggle('cur',cc===s);
+        },dt);
+      })(s);
+      if(curStep===0&&stepCount>0)lifeStep();
+      stepCount++;
+    }else{
+      var s=nextStepIdx();
+      for(var r=0;r<ROWS;r++){
+        if(grid[r]&&grid[r][s]){
+          if(r<RAGA_ROWS){var go=grid[r][s]-1;playNote(r,0,Math.min(dd,stepDur()*3),rr,go);}
+          else playSndPad(r-RAGA_ROWS);
+        }
+      }
+      (function(s){var dt=Math.max(0,(nextT-actx.currentTime)*1000);
+        setTimeout(function(){
+          for(var rr2=0;rr2<ROWS;rr2++)if(stEls[rr2])for(var cc=0;cc<STEPS;cc++)
+            if(stEls[rr2][cc])stEls[rr2][cc].classList.toggle('cur',cc===s);
+        },dt);
+      })(s);
+    }
+    nextT+=stepDur();
+  }
+  tmr=setTimeout(sched,25);
+}
+
+// === PRESETS ===
+var PR={
+  'breathe':[[0,[0,8],1],[1,[4,12],1],[4,[2,10],1],[5,[6,14],1]],
+  'four/four':[[7,[0,4,8,12]],[8,[2,6,10,14]],[0,[0],1],[1,[8],1],[4,[4,12],0]],
+  'stutter':[[7,[0,1,4,5,8,9,12,13]],[8,[2,3,6,7,10,11,14,15]],[0,[0,8],1],[3,[4,12],1]],
+  'pulse':[[7,[0,2,4,6,8,10,12,14]],[0,[0,8],1],[3,[4,12],0]],
+  'build':[[7,[0,4,8,12]],[0,[0],0],[8,[2,6,10,14]],[1,[4],1],[9,[0,4,8,12]],[2,[8],1],[10,[1,5,9,13]],[3,[12],2]],
+  'dice':[]
+};
+
+// === PATTERN GENERATORS (MODES) ===
+function euclid(n,k){
+  if(k===0)return Array(n).fill(false);if(k>=n)return Array(n).fill(true);
+  var pat=[];for(var i=0;i<n;i++)pat.push(i<k?[true]:[false]);
+  var level=0;
+  while(true){
+    var cnt=0;for(var i=k;i<pat.length;i++){if(pat[i].length===pat[pat.length-1].length)cnt++;else break}
+    if(cnt<=1)break;
+    var np=[],ml=Math.min(k,pat.length-k);
+    for(var i=0;i<ml;i++)np.push(pat[i].concat(pat[pat.length-1-i]));
+    for(var i=ml;i<pat.length-ml;i++)np.push(pat[i]);
+    pat=np;k=ml;if(++level>20)break;
+  }
+  var out=[];pat.forEach(function(p){out=out.concat(p)});return out;
+}
+function rndOct(){return Math.floor(Math.random()*3)}
+var MODES={
+  'euclidean':function(){
+    for(var r=0;r<ROWS;r++){if(!grid[r])continue;
+      var h=1+Math.floor(Math.random()*5);if(Math.random()>.5)h=0;
+      var p=euclid(STEPS,h),o=Math.floor(Math.random()*STEPS);
+      for(var c=0;c<STEPS;c++){var cc=(c+o)%STEPS;if(p[c])setCell(r,cc,rndOct());else clearCell(r,cc);}
+    }
+  },
+  'drunk':function(){
+    for(var r=0;r<ROWS;r++)if(grid[r])for(var c=0;c<STEPS;c++)clearCell(r,c);
+    var r=Math.floor(Math.random()*ROWS),c=0;
+    for(var i=0;i<Math.max(32,ROWS*3);i++){if(grid[r])setCell(r,c,rndOct());
+      c=(c+1)%STEPS;r=Math.max(0,Math.min(ROWS-1,r+Math.floor(Math.random()*3)-1))}
+  },
+  'probability':function(){
+    for(var r=0;r<ROWS;r++){if(!grid[r])continue;
+      var p=Math.random()*.3;
+      for(var c=0;c<STEPS;c++){if(Math.random()<p)setCell(r,c,rndOct());else clearCell(r,c);}}
+  },
+  'mirror':function(){
+    for(var r=0;r<ROWS;r++){if(!grid[r])continue;
+      for(var c=0;c<8;c++){var o=rndOct();
+        if(Math.random()<.15){setCell(r,c,o);setCell(r,15-c,o);}
+        else{clearCell(r,c);clearCell(r,15-c);}
+      }
+    }
+  },
+  'polyrhythm':function(){
+    for(var r=0;r<ROWS;r++){if(!grid[r])continue;
+      var div=2+Math.floor(Math.random()*6);
+      for(var c=0;c<STEPS;c++){if(c%div===0)setCell(r,c,rndOct());else clearCell(r,c);}}
+  },
+  'shuffle':function(){
+    for(var r=0;r<ROWS;r++){if(!grid[r])continue;
+      var cells=[];for(var c=0;c<STEPS;c++)cells.push(grid[r][c]);
+      for(var i=cells.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=cells[i];cells[i]=cells[j];cells[j]=t;}
+      for(var c=0;c<STEPS;c++){if(cells[c])setCell(r,c,r<RAGA_ROWS?rndOct():0);else clearCell(r,c);}}
+  }
+};
+
+// === TRANSPORT ===
+function startPlay(){
+  if(!actx)initAudio();
+  if(playing)return;
+  playing=true;curStep=-1;nextT=actx.currentTime;
+  bounceDir=1;pendulumPhase=-0.18;stepCount=0;spiralRow=0;
+  multiRateCounters=[];
+  for(var r=0;r<ROWS;r++)multiRateCounters.push(0);
+  document.getElementById('bPlay').classList.add('go');
+  sched();
+  msg.textContent='playing ('+playMode+')';
+  led.classList.add('on');
+}
+function stopPlay(){
+  playing=false;
+  clearTimeout(tmr);
+  document.getElementById('bPlay').classList.remove('go');
+  for(var r=0;r<ROWS;r++)if(stEls[r])for(var c=0;c<STEPS;c++)
+    if(stEls[r][c])stEls[r][c].classList.remove('cur');
+  msg.textContent='stopped';
+  led.classList.remove('on');
+}
+function clearSeq(){
+  for(var r=0;r<ROWS;r++)for(var c=0;c<STEPS;c++)clearCell(r,c);
+  msg.textContent='cleared';
+}
+function toggleRec(){
+  recording=!recording;
+  var btn=document.getElementById('bRec');
+  btn.classList.toggle('rec-on',recording);
+  if(recording){
+    if(!playing)startPlay();
+    msg.textContent='recording \u2014 tap pads';
+    led.classList.add('rec');
+  }else{
+    led.classList.remove('rec');
+    msg.textContent='rec off';
+  }
+}
+
+// === RAGA PADS ===
+function buildPads(){
+  var padGrid=document.getElementById('padGrid');
+  padGrid.innerHTML='';
+  var raga=ragas[curRaga];
+  for(var i=0;i<7;i++){
+    (function(idx){
+      var pad=document.createElement('div');
+      pad.className='pad'+(raga.svaras[idx]?'':' disabled');
+      pad.setAttribute('data-svara',idx);
+      pad.style.setProperty('--c',SVARA_COLORS[idx]);
+      pad.innerHTML='<div class="gl"></div><div class="nm">'+raga.names[idx]+'</div><div class="nm2">'+SVARA_NAMES_SHORT[idx].toLowerCase()+'</div>';
+      function onDown(e){
+        e.preventDefault();
+        if(pad.classList.contains('disabled'))return;
+        if(!actx)initAudio();
+        pad.classList.add('dn');
+        pad.classList.add('fl');
+        setTimeout(function(){pad.classList.remove('fl')},300);
+        playNote(idx,0);haptic();
+        if(recording&&playing){
+          var col=curStep>=0?curStep:0;
+          var ov=curOctave+1;
+          grid[idx][col]=ov;
+          if(stEls[idx]&&stEls[idx][col]){stEls[idx][col].classList.add('on','oct'+(ov-1));}
+        }
+      }
+      function onUp(e){e.preventDefault();pad.classList.remove('dn')}
+      pad.addEventListener('pointerdown',onDown);
+      pad.addEventListener('pointerup',onUp);
+      pad.addEventListener('pointerleave',onUp);
+      pad.addEventListener('pointercancel',onUp);
+      padGrid.appendChild(pad);
+    })(i);
+  }
+}
+
+// === SOUND PADS (with per-pad management) ===
+var sndPadStates=[];
+var sndPadEls=[];
+var SND_PAD_COUNT=7;
+
+var defaultSounds=[
+  {name:'Kick',type:'drum',drumType:'kick',col:'#e08040'},
+  {name:'empty',type:'empty',col:'#333'},
+  {name:'empty',type:'empty',col:'#333'},
+  {name:'empty',type:'empty',col:'#333'},
+  {name:'empty',type:'empty',col:'#333'},
+  {name:'empty',type:'empty',col:'#333'},
+  {name:'empty',type:'empty',col:'#333'}
+];
+
+function initSndPads(){
+  sndPadStates=[];
+  for(var i=0;i<SND_PAD_COUNT;i++){
+    var ds=defaultSounds[i];
+    var ps={name:ds.name,type:ds.type,col:ds.col,buf:null};
+    if(ds.type==='drum'){
+      ps.buf=genDrumBuf(ds.drumType);
+      ps.sub=ds.drumType;
+    }else if(ds.type==='synth'){
+      ps.buf=genSoundBuf(ds.freq,ds.synthType);
+      ps.sub=ds.synthType;
+    }else{
+      ps.sub='tap+hold';
+    }
+    sndPadStates.push(ps);
+  }
+}
+
+function buildSndPads(){
+  var grid2=document.getElementById('sndPadGrid');
+  grid2.innerHTML='';
+  sndPadEls=[];
+  for(var i=0;i<SND_PAD_COUNT;i++){
+    (function(idx){
+      var ps=sndPadStates[idx];
+      var pad=document.createElement('div');
+      pad.className='pad';
+      pad.style.setProperty('--c',ps.col);
+      var emptyLabel=ps.type==='empty'?'+':'';
+      pad.innerHTML='<div class="gl"></div><div class="nm">'+(ps.type==='empty'?emptyLabel:ps.name)+'</div><div class="nm2">'+(ps.type==='empty'?'add sound':(ps.sub||''))+'</div>';
+
+      var longPressTmr=null,longPressed=false;
+      function onDown(e){
+        e.preventDefault();
+        if(!actx)initAudio();
+        longPressed=false;
+        // Empty pad: tap opens sound browser directly
+        if(sndPadStates[idx].type==='empty'){
+          showSoundBrowser(idx);
+          return;
+        }
+        longPressTmr=setTimeout(function(){
+          longPressed=true;
+          showPadMenu(idx);
+        },500);
+        pad.classList.add('dn');
+        pad.classList.add('fl');
+        setTimeout(function(){pad.classList.remove('fl')},300);
+        playSndPad(idx);haptic();
+        if(recording&&playing){
+          var row=RAGA_ROWS+Math.min(idx,SND_ROWS-1);
+          var col=curStep>=0?curStep:0;
+          grid[row][col]=1;
+          if(stEls[row]&&stEls[row][col])stEls[row][col].classList.add('on','oct0');
+        }
+      }
+      function onUp(e){
+        e.preventDefault();
+        clearTimeout(longPressTmr);
+        pad.classList.remove('dn');
+      }
+      pad.addEventListener('pointerdown',onDown);
+      pad.addEventListener('pointerup',onUp);
+      pad.addEventListener('pointerleave',onUp);
+      pad.addEventListener('pointercancel',onUp);
+      sndPadEls.push(pad);
+      grid2.appendChild(pad);
+    })(i);
+  }
+}
+
+function refreshSndPad(idx){
+  var ps=sndPadStates[idx];
+  if(!ps||!sndPadEls[idx])return;
+  var p=sndPadEls[idx];
+  if(ps.type==='empty'){
+    p.querySelector('.nm').textContent='+';
+    p.querySelector('.nm2').textContent='add sound';
+  }else{
+    p.querySelector('.nm').textContent=ps.name;
+    p.querySelector('.nm2').textContent=ps.sub||'';
+  }
+  p.style.setProperty('--c',ps.col);
+  refreshSeqColors();
+}
+
+// === PAD MENU ===
+var contextTarget=null;
+
+function showPadMenu(idx){
+  contextTarget=idx;
+  var ps=sndPadStates[idx];
+  document.getElementById('pmTitle').textContent='PAD '+(idx+1)+(ps&&ps.type!=='empty'?' \u2014 '+ps.name:'');
+  document.getElementById('padMenu').classList.add('show');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function hidePadMenu(){
+  document.getElementById('padMenu').classList.remove('show');
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function removePadSound(idx){
+  sndPadStates[idx]={name:'empty',type:'empty',col:'#333',sub:'',buf:null};
+  refreshSndPad(idx);
+  msg.textContent='pad '+(idx+1)+' cleared \u2014 tap to add new sound';
+}
+
+// Mic recording to pad
+function startPadRecording(idx){
+  if(!actx)initAudio();
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}}).then(function(stream){
+    var src=actx.createMediaStreamSource(stream);
+    var chunks=[];
+    var proc=actx.createScriptProcessor(4096,1,1);
+    var padRecording2=true;
+    proc.onaudioprocess=function(e){if(padRecording2)chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)))};
+    src.connect(proc);proc.connect(actx.destination);
+    if(sndPadEls[idx]){sndPadEls[idx].style.borderColor='#e55';sndPadEls[idx].style.animation='pulse .8s infinite'}
+    msg.textContent='recording to pad '+(idx+1)+'... tap to stop';
+    var startT=Date.now();
+    var cInt=setInterval(function(){if(!padRecording2){clearInterval(cInt);return}
+      msg.textContent='REC pad '+(idx+1)+' '+((Date.now()-startT)/1000).toFixed(1)+'s'},100);
+    var autoStop=setTimeout(function(){if(padRecording2)finishRec()},10000);
+    function finishRec(){
+      padRecording2=false;clearTimeout(autoStop);clearInterval(cInt);
+      proc.disconnect();src.disconnect();stream.getTracks().forEach(function(t){t.stop()});
+      var totalLen=0;chunks.forEach(function(c){totalLen+=c.length});
+      if(totalLen<1000){msg.textContent='too short';return}
+      var merged=new Float32Array(totalLen);var off=0;
+      chunks.forEach(function(c){merged.set(c,off);off+=c.length});
+      var buf=actx.createBuffer(1,totalLen,actx.sampleRate);
+      buf.copyToChannel(merged,0);
+      recBufs.push(buf);
+      sndPadStates[idx]={name:'rec '+recBufs.length,type:'recorded',col:'#e55',sub:buf.duration.toFixed(1)+'s',buf:buf};
+      refreshSndPad(idx);
+      if(sndPadEls[idx]){sndPadEls[idx].style.borderColor='';sndPadEls[idx].style.animation=''}
+      msg.textContent='recorded '+buf.duration.toFixed(1)+'s to pad '+(idx+1);
+    }
+    if(sndPadEls[idx])sndPadEls[idx].addEventListener('pointerdown',function stopRec(){
+      if(padRecording2){finishRec();sndPadEls[idx].removeEventListener('pointerdown',stopRec)}
+    });
+  }).catch(function(e){msg.textContent='mic: '+e.message});
+}
+
+// === SOUND BROWSER ===
+var sbTarget=null,sbCat='strings';
+
+var soundLib={
+  strings:[
+    {name:'Violin A4',freq:440,synth:'violin',col:'#c8a050'},
+    {name:'Violin C4',freq:262,synth:'violin',col:'#c8a050'},
+    {name:'Viola C3',freq:131,synth:'viola',col:'#a080e0'},
+    {name:'Viola G3',freq:196,synth:'viola',col:'#a080e0'},
+    {name:'Cello C2',freq:65,synth:'cello',col:'#50c8a0'},
+    {name:'Cello A2',freq:110,synth:'cello',col:'#50c8a0'}
+  ],bass:[
+    {name:'D.Bass E1',freq:41,synth:'doublebass',col:'#e08040'},
+    {name:'D.Bass A1',freq:55,synth:'doublebass',col:'#e08040'},
+    {name:'Sub C2',freq:65,synth:'subbass',col:'#c850a0'},
+    {name:'Sub E2',freq:82,synth:'subbass',col:'#c850a0'},
+    {name:'Pluck A2',freq:110,synth:'basspluck',col:'#50a0c8'},
+    {name:'Pluck E2',freq:82,synth:'basspluck',col:'#50a0c8'}
+  ],synth:[
+    {name:'Synth C4',freq:262,synth:'synth',col:'#a0c850'},
+    {name:'Bell C5',freq:523,synth:'bell',col:'#c8a050'},
+    {name:'Pad A3',freq:220,synth:'pad',col:'#6656a0'},
+    {name:'Pluck D4',freq:294,synth:'pluck',col:'#50c8a0'},
+    {name:'Bass G2',freq:98,synth:'bass',col:'#e08040'}
+  ],drums:[
+    {name:'Kick',drum:'kick',col:'#e08040'},
+    {name:'Snare',drum:'snare',col:'#50a0c8'},
+    {name:'Hat',drum:'hat',col:'#c8a050'},
+    {name:'Clap',drum:'clap',col:'#c850a0'}
+  ],recorded:[]
+};
+
+function showSoundBrowser(idx){
+  sbTarget=idx;
+  document.getElementById('soundBrowser').classList.add('show');
+  document.getElementById('modalOverlay').classList.add('show');
+  renderSounds();
+}
+function hideSoundBrowser(){
+  document.getElementById('soundBrowser').classList.remove('show');
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function renderSounds(){
+  var el=document.getElementById('sbSounds');el.innerHTML='';
+  var list=soundLib[sbCat]||[];
+  if(sbCat==='recorded'){
+    list=[];
+    for(var ri=0;ri<recBufs.length;ri++){
+      list.push({name:'rec '+(ri+1),recIdx:ri,col:'#e55'});
+    }
+  }
+  list.forEach(function(snd){
+    var d=document.createElement('div');d.className='sb-snd';
+    d.style.setProperty('--c',snd.col||'#555');
+    d.innerHTML='<div class="sbs-nm">'+snd.name+'</div><div class="sbs-tp">'+(snd.synth||snd.drum||'recorded')+'</div>';
+    d.addEventListener('click',function(){
+      assignSound(sbTarget,snd);hideSoundBrowser();
+    });
+    el.appendChild(d);
+  });
+}
+
+function assignSound(idx,snd){
+  if(!actx)initAudio();
+  if(snd.synth){
+    var buf=genSoundBuf(snd.freq,snd.synth);
+    sndPadStates[idx]={name:snd.name,type:'synth',col:snd.col||'#a080e0',sub:snd.synth,buf:buf};
+  }else if(snd.drum){
+    var buf=genDrumBuf(snd.drum);
+    sndPadStates[idx]={name:snd.name,type:'drum',col:snd.col||'#e08040',sub:snd.drum,buf:buf};
+  }else if(snd.recIdx!==undefined){
+    var buf=recBufs[snd.recIdx];
+    sndPadStates[idx]={name:snd.name,type:'recorded',col:'#e55',sub:buf.duration.toFixed(1)+'s',buf:buf};
+  }
+  refreshSndPad(idx);
+  msg.textContent=snd.name+' \u2192 pad '+(idx+1);
+}
+
+// === DRUM VARIANTS ===
+var DRUM_VARS={
+  kick:{variants:['deep','tight','808','boom'],cur:0,
+    gen:function(v){var sr=actx.sampleRate;var len=sr*0.4|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+      if(v==='deep'){for(var i=0;i<len;i++){var t=i/sr;d[i]=Math.sin(2*Math.PI*(150*Math.exp(-t*25)+30)*t)*Math.exp(-t*6)*0.8}}
+      else if(v==='tight'){for(var i=0;i<len;i++){var t=i/sr;d[i]=Math.sin(2*Math.PI*(200*Math.exp(-t*40)+50)*t)*Math.exp(-t*10)*0.7}}
+      else if(v==='808'){for(var i=0;i<len;i++){var t=i/sr;var click=t<0.003?(Math.random()*2-1)*0.5:0;d[i]=(Math.sin(2*Math.PI*(55*Math.exp(-t*8)+28)*t)*0.9+click)*Math.exp(-t*3)}}
+      else if(v==='boom'){for(var i=0;i<len;i++){var t=i/sr;var sub=Math.sin(2*Math.PI*35*t)*0.6*Math.exp(-t*2);d[i]=(Math.sin(2*Math.PI*(80*Math.exp(-t*15)+20)*t)*0.5+sub)*Math.exp(-t*4)}}
+      return buf}},
+  snare:{variants:['crack','brush','rim','snappy'],cur:0,
+    gen:function(v){var sr=actx.sampleRate;var len=sr*0.2|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+      if(v==='crack'){for(var i=0;i<len;i++){var t=i/sr;d[i]=((Math.random()*2-1)*0.6+Math.sin(2*Math.PI*180*t)*0.4)*Math.exp(-t*15)}}
+      else if(v==='brush'){for(var i=0;i<len;i++){var t=i/sr;var atk=Math.min(1,t*20);d[i]=(Math.random()*2-1)*0.35*atk*Math.exp(-t*8)}}
+      else if(v==='rim'){for(var i=0;i<len;i++){var t=i/sr;var sq=((2*Math.PI*800*t)%(2*Math.PI)<Math.PI?1:-1);d[i]=sq*0.4*Math.exp(-t*30)+(Math.random()*2-1)*0.15*Math.exp(-t*20)}}
+      else if(v==='snappy'){for(var i=0;i<len;i++){var t=i/sr;d[i]=((Math.random()*2-1)*0.5*Math.exp(-t*12)+Math.sin(2*Math.PI*220*t)*0.3*Math.exp(-t*20))*0.7}}
+      return buf}},
+  hat:{variants:['closed','open','pedal','shaker'],cur:0,
+    gen:function(v){var sr=actx.sampleRate;
+      if(v==='closed'){var len=sr*0.06|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);for(var i=0;i<len;i++){var t=i/sr;d[i]=(Math.random()*2-1)*Math.exp(-t*50)*0.4}return buf}
+      else if(v==='open'){var len=sr*0.3|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);for(var i=0;i<len;i++){var t=i/sr;d[i]=(Math.random()*2-1)*Math.exp(-t*8)*0.35}return buf}
+      else if(v==='pedal'){var len=sr*0.04|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);for(var i=0;i<len;i++){var t=i/sr;d[i]=(Math.random()*2-1)*Math.exp(-t*60)*0.3}return buf}
+      else if(v==='shaker'){var len=sr*0.15|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);for(var i=0;i<len;i++){var t=i/sr;var burst=(i%(sr*0.02|0)<(sr*0.008|0))?1:0.3;d[i]=(Math.random()*2-1)*burst*Math.exp(-t*10)*0.3}return buf}
+      return actx.createBuffer(1,sr*0.05|0,sr)}},
+  clap:{variants:['clap','snap','stick','conga'],cur:0,
+    gen:function(v){var sr=actx.sampleRate;var len=sr*0.15|0;var buf=actx.createBuffer(1,len,sr);var d=buf.getChannelData(0);
+      if(v==='clap'){for(var i=0;i<len;i++){var t=i/sr;var burst=(t<0.01||t>0.015&&t<0.025||t>0.03&&t<0.04)?1:0.3;d[i]=(Math.random()*2-1)*burst*Math.exp(-t*12)*0.5}}
+      else if(v==='snap'){for(var i=0;i<len;i++){var t=i/sr;d[i]=(Math.sin(2*Math.PI*(1800*Math.exp(-t*60)+200)*t)*0.5+t<0.005?(Math.random()*2-1)*0.4:0)*Math.exp(-t*25)}}
+      else if(v==='stick'){for(var i=0;i<len;i++){var t=i/sr;var sq=((2*Math.PI*1200*t)%(2*Math.PI)<Math.PI?1:-1);d[i]=sq*0.3*Math.exp(-t*40)}}
+      else if(v==='conga'){for(var i=0;i<len;i++){var t=i/sr;d[i]=Math.sin(2*Math.PI*(280*Math.exp(-t*8)+130)*t)*0.6*Math.exp(-t*8)}}
+      return buf}}
+};
+
+function cycleDrumVariant(sndIdx,dir){
+  var ps=sndPadStates[sndIdx];
+  if(!ps||ps.type!=='drum')return;
+  var dv=DRUM_VARS[ps.sub];
+  if(!dv)return;
+  dv.cur=(dv.cur+(dir||1)+dv.variants.length)%dv.variants.length;
+  var vName=dv.variants[dv.cur];
+  ps.buf=dv.gen(vName);
+  ps.name=ps.sub.charAt(0).toUpperCase()+ps.sub.slice(1);
+  sndPadEls[sndIdx].querySelector('.nm2').textContent=vName;
+  if(navigator.vibrate)navigator.vibrate(8);
+  msg.textContent=ps.sub+': '+vName;
+}
+
+// === PAD EFFECTS (drag + stutter) ===
+var padDragState={active:false,padIdx:-1,padType:'',startX:0,startY:0,isDrum:false};
+
+function setupPadGestures(){
+  // Raga pad gestures (pitch bend on vertical drag)
+  document.querySelectorAll('#padGrid .pad').forEach(function(pad,idx){
+    var startY=0,startVal=0,dragging=false,holdTmr=null,stutterTmr=null;
+    pad.addEventListener('pointerdown',function(e){
+      startY=e.clientY;dragging=false;
+      holdTmr=setTimeout(function(){
+        // Stutter effect
+        dragging=true;
+        var interval=120;
+        function doStutter(){
+          playNote(idx,0,0.15,0.05);
+          interval=Math.max(40,interval*0.9);
+          stutterTmr=setTimeout(doStutter,interval);
+        }
+        doStutter();
+        pad.style.boxShadow='0 0 15px #e94560';
+      },300);
+    });
+    pad.addEventListener('pointermove',function(e){
+      if(Math.abs(e.clientY-startY)>15){
+        clearTimeout(holdTmr);
+        var dy=(startY-e.clientY)/100;
+        var semi=Math.max(-12,Math.min(12,dy*12));
+        if(Math.abs(semi)>0.5){
+          dragging=true;
+          // Visual feedback
+          var ov=pad.querySelector('.drag-overlay');
+          if(!ov){ov=document.createElement('div');ov.className='drag-overlay';pad.appendChild(ov)}
+          ov.style.background=semi>0?'rgba(70,170,255,'+(Math.abs(semi)/24)+')':'rgba(255,70,70,'+(Math.abs(semi)/24)+')';
+        }
+      }
+    });
+    function onUp(){
+      clearTimeout(holdTmr);clearTimeout(stutterTmr);
+      dragging=false;pad.style.boxShadow='';
+      var ov=pad.querySelector('.drag-overlay');if(ov)ov.style.background='transparent';
+    }
+    pad.addEventListener('pointerup',onUp);
+    pad.addEventListener('pointerleave',onUp);
+    pad.addEventListener('pointercancel',onUp);
+  });
+}
+
+function setupSndPadGestures(){
+  // Sound pad gestures: vertical swipe = drum variant cycle, hold = stutter
+  sndPadEls.forEach(function(pad,idx){
+    var startY=0,startX=0,holdTmr=null,stutterTmr=null,moved=false;
+    pad.addEventListener('pointerdown',function(e){
+      startY=e.clientY;startX=e.clientX;moved=false;
+    });
+    pad.addEventListener('pointermove',function(e){
+      var dy=startY-e.clientY;var dx=e.clientX-startX;
+      if(Math.abs(dy)>25&&!moved){
+        moved=true;
+        cycleDrumVariant(idx,dy>0?1:-1);
+      }
+    });
+  });
+}
+
+// === SONG RECORDING (PCM → WAV) ===
+var songRecording=false,songChunks=[],songBlob=null,songCountdown=30;
+var songProcessor=null,countdownTmr=null;
+
+function startSongRec(){
+  if(!actx)initAudio();
+  if(songRecording){stopSongRec();return}
+  songChunks=[];songCountdown=30;
+  // Capture raw PCM via ScriptProcessor
+  songProcessor=actx.createScriptProcessor(4096,1,1);
+  songProcessor.onaudioprocess=function(e){
+    if(songRecording)songChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  };
+  masterGain.connect(songProcessor);
+  songProcessor.connect(actx.destination);
+  songRecording=true;
+  document.body.classList.add('song-rec');
+  document.getElementById('bSongRec').classList.add('rec-on');
+  document.getElementById('bSongRec').textContent='STOP '+songCountdown;
+  if(!playing)startPlay();
+  countdownTmr=setInterval(function(){
+    songCountdown--;
+    document.getElementById('bSongRec').textContent='STOP '+songCountdown;
+    if(songCountdown<=0)stopSongRec();
+  },1000);
+  msg.textContent='recording song...';led.classList.add('rec');
+}
+function stopSongRec(){
+  if(!songRecording)return;
+  songRecording=false;
+  clearInterval(countdownTmr);
+  document.body.classList.remove('song-rec');
+  document.getElementById('bSongRec').classList.remove('rec-on');
+  document.getElementById('bSongRec').innerHTML='&#9679; SONG';
+  led.classList.remove('rec');
+  // Add sonic watermark
+  addSonicWatermark();
+  // Wait for watermark then encode WAV
+  setTimeout(function(){
+    if(songProcessor){songProcessor.disconnect();masterGain.disconnect(songProcessor);songProcessor=null}
+    songBlob=encodeWAV(songChunks,actx.sampleRate);
+    showShareOverlay();
+    msg.textContent='song ready \u2014 '+songChunks.length+' chunks';
+  },700);
+}
+
+// WAV encoder
+function encodeWAV(chunks,sr){
+  var totalLen=0;chunks.forEach(function(c){totalLen+=c.length});
+  var buf=new ArrayBuffer(44+totalLen*2);
+  var v=new DataView(buf);
+  // RIFF header
+  var writeStr=function(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  writeStr(0,'RIFF');v.setUint32(4,36+totalLen*2,true);writeStr(8,'WAVE');
+  writeStr(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);
+  v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);
+  writeStr(36,'data');v.setUint32(40,totalLen*2,true);
+  var off=44;
+  chunks.forEach(function(c){
+    for(var i=0;i<c.length;i++){
+      var s=Math.max(-1,Math.min(1,c[i]));
+      v.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;
+    }
+  });
+  return new Blob([buf],{type:'audio/wav'});
+}
+
+// === SHARE OVERLAY ===
+var shareAudioEl=null;
+function renderGridImage(){
+  var c=document.getElementById('shareCanvas');
+  var ctx=c.getContext('2d');
+  var w=400,h=200;c.width=w;c.height=h;
+  // Background
+  ctx.fillStyle='#0a0a0b';ctx.fillRect(0,0,w,h);
+  // Title
+  ctx.fillStyle='#e94560';ctx.font='bold 14px sans-serif';
+  ctx.fillText('RaGaM PaD',10,20);
+  ctx.fillStyle='#666';ctx.font='10px sans-serif';
+  ctx.fillText(ragas[curRaga].name+' | '+kv('knobBPM').toFixed(0)+' BPM',80,20);
+  // Grid
+  var gx=10,gy=30,gw=w-20,gh=h-40;
+  var cw=gw/STEPS,ch=gh/ROWS;
+  var allColors=SVARA_COLORS.slice();for(var i=0;i<SND_ROWS;i++)allColors.push(getSndColor(i));
+  for(var r=0;r<ROWS;r++){
+    for(var c2=0;c2<STEPS;c2++){
+      var x=gx+c2*cw,y=gy+r*ch;
+      if(grid[r]&&grid[r][c2]){
+        ctx.fillStyle=allColors[r]||'#555';
+        var ov=grid[r][c2];
+        ctx.globalAlpha=ov===1?0.5:ov===3?1:0.85;
+        ctx.fillRect(x+0.5,y+0.5,cw-1,ch-1);
+        ctx.globalAlpha=1;
+      }else{
+        ctx.fillStyle='#151518';
+        ctx.fillRect(x+0.5,y+0.5,cw-1,ch-1);
+      }
+    }
+    // Separator between raga and sound rows
+    if(r===RAGA_ROWS-1){
+      ctx.fillStyle='#1a1a1e';
+      ctx.fillRect(gx,gy+(r+1)*ch-1,gw,2);
+    }
+  }
+  // Border
+  ctx.strokeStyle='#1a1a1e';ctx.lineWidth=1;
+  ctx.strokeRect(gx,gy,gw,gh);
+}
+function showShareOverlay(){
+  if(!songBlob)return;
+  stopPlay();stopDrone();
+  var overlay=document.getElementById('shareOverlay');
+  overlay.classList.add('show');
+  var dur=songCountdown<=0?30:(30-songCountdown);
+  document.getElementById('shareTimer').textContent=dur+'s recorded';
+  renderGridImage();
+}
+function hideShareOverlay(){document.getElementById('shareOverlay').classList.remove('show')}
+
+function sharePlayPreview(){
+  if(!songBlob)return;
+  var btn=document.getElementById('sharePlay');
+  if(shareAudioEl){shareAudioEl.pause();shareAudioEl=null;btn.innerHTML='&#9654; Play Preview';return}
+  stopPlay();stopDrone();
+  var url=URL.createObjectURL(songBlob);
+  shareAudioEl=new Audio(url);
+  shareAudioEl.play();
+  btn.innerHTML='&#9632; Stop Preview';
+  shareAudioEl.onended=function(){shareAudioEl=null;btn.innerHTML='&#9654; Play Preview'};
+}
+function makeJamHtml(){
+  var jamState=encodeJam();
+  var html=document.documentElement.outerHTML;
+  var bootScript='<script>window.__JAM_STATE__="'+jamState+'";<\/script>';
+  html=html.replace('<head>','<head>'+bootScript);
+  return new Blob([html],{type:'text/html'});
+}
+function shareAll(){
+  if(shareAudioEl){shareAudioEl.pause();shareAudioEl=null}
+  var htmlBlob=makeJamHtml();
+  var files=[new File([htmlBlob],'ragampad-jam.html',{type:'text/html'})];
+  if(songBlob)files.push(new File([songBlob],'ragampad-jam.wav',{type:'audio/wav'}));
+  var shareData={title:'RaGaM PaD',
+    text:'Hey, try RaGaM PaD! This is a song I made',
+    files:files};
+  if(navigator.canShare&&navigator.canShare(shareData)){
+    navigator.share(shareData).then(function(){
+      msg.textContent='shared!';hideShareOverlay();
+    }).catch(function(e){
+      if(e.name!=='AbortError')shareDownloadHtml();
+    });
+  }else{
+    shareDownloadHtml();
+    msg.textContent='jam file downloaded \u2014 share it!';
+  }
+}
+function shareDownloadHtml(){
+  var blob=makeJamHtml();
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='ragampad-jam.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  msg.textContent='HTML jam file downloaded';
+}
+function shareDownload(){
+  if(!songBlob){msg.textContent='no recording';return}
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(songBlob);
+  a.href=url;a.download='rgmpd-jam.wav';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},5000);
+  msg.textContent='WAV downloaded';
+}
+function shareImageDownload(){
+  var canvas=document.getElementById('shareCanvas');
+  var a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='rgmpd-jam.png';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  msg.textContent='grid image saved';
+}
+
+// === JAM LINK (encode/decode grid state) ===
+function encodeJam(){
+  var state={v:'3.2',r:curRaga,b:kv('knobBPM'),o:curOctave,sr:sruthiVal,
+    gk:kv('knobGMK'),dc:kv('knobDEC'),rv:kv('knobREV'),pm:playMode,g:[],s:[]};
+  for(var r=0;r<ROWS;r++){
+    var cols=[];
+    for(var c=0;c<STEPS;c++)if(grid[r]&&grid[r][c])cols.push([c,grid[r][c]]);
+    if(cols.length>0)state.g.push([r,cols]);
+  }
+  for(var i=0;i<sndPadStates.length;i++){
+    var ps=sndPadStates[i];
+    if(ps.type!=='empty')state.s.push([i,ps.type,ps.sub||'',ps.name]);
+  }
+  return btoa(JSON.stringify(state));
+}
+function decodeJam(hash){
+  try{
+    var state=JSON.parse(atob(hash));
+    if(state.r&&ragas[state.r]){
+      document.getElementById('ragaSel').value=state.r;
+      selectRaga(state.r);
+    }
+    if(state.b){knobDefs.knobBPM.val=state.b;updateKnobUI('knobBPM')}
+    if(state.o!==undefined)setOctave(state.o);
+    if(state.sr!==undefined){sruthiVal=state.sr;document.getElementById('sruthiSel').value=state.sr}
+    if(state.gk!==undefined){knobDefs.knobGMK.val=state.gk;updateKnobUI('knobGMK')}
+    if(state.dc!==undefined){knobDefs.knobDEC.val=state.dc;updateKnobUI('knobDEC')}
+    if(state.rv!==undefined){knobDefs.knobREV.val=state.rv;updateKnobUI('knobREV')}
+    if(state.pm){
+      playMode=state.pm;
+      document.querySelectorAll('.pm').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-pm')===state.pm)});
+    }
+    if(state.s&&state.s.length>0){
+      state.s.forEach(function(sp){
+        var idx=sp[0],type=sp[1],sub=sp[2],name=sp[3];
+        if(type==='drum'&&sub){
+          sndPadStates[idx]={name:name,type:'drum',col:defaultSounds[idx]?defaultSounds[idx].col:'#e08040',sub:sub,buf:genDrumBuf(sub)};
+        }else if(type==='synth'&&sub){
+          var freq=440;
+          soundLib.strings.concat(soundLib.synth).forEach(function(s){if(s.synth===sub)freq=s.freq});
+          sndPadStates[idx]={name:name,type:'synth',col:defaultSounds[idx]?defaultSounds[idx].col:'#80c8a0',sub:sub,buf:genSoundBuf(freq,sub)};
+        }
+        if(sndPadEls[idx])refreshSndPad(idx);
+      });
+    }
+    if(state.g){
+      clearSeq();
+      state.g.forEach(function(rg){
+        var r=rg[0];
+        rg[1].forEach(function(cv){
+          if(typeof cv==='number'){if(grid[r])setCell(r,cv,1);}
+          else{if(grid[r])setCell(r,cv[0],(cv[1]||1)-1);}
+        });
+      });
+    }
+    msg.textContent='jam loaded!';
+    return true;
+  }catch(e){return false}
+}
+function copyJamLink(){
+  var hash=encodeJam();
+  var url=window.location.href.split('#')[0]+'#jam='+hash;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){msg.textContent='jam link copied!'});
+  }else{
+    prompt('Copy this jam link:',url);
+  }
+}
+
+// === DJ EFFECTS ===
+var filt=null,djFxState={},tempoMul=1;
+
+function initDjFx(){
+  djFxState={spin:false,stut:false,half:false,'2x':false,fltr:false,tape:false,wash:false};
+}
+
+function toggleDjFx(fx){
+  if(!actx)initAudio();
+  djFxState[fx]=!djFxState[fx];
+  var btn=document.querySelector('.dj[data-fx="'+fx+'"]');
+  if(btn)btn.classList.toggle('on',djFxState[fx]);
+
+  if(fx==='spin'){
+    if(djFxState.spin){
+      // Vinyl slowdown: ramp filter and reduce gain
+      if(filt){filt.frequency.cancelScheduledValues(actx.currentTime);
+        filt.frequency.linearRampToValueAtTime(200,actx.currentTime+2)}
+      masterGain.gain.linearRampToValueAtTime(0.05,actx.currentTime+2);
+      setTimeout(function(){
+        if(djFxState.spin){
+          djFxState.spin=false;if(btn)btn.classList.remove('on');
+          masterGain.gain.linearRampToValueAtTime(1,actx.currentTime+0.3);
+          if(filt)filt.frequency.linearRampToValueAtTime(20000,actx.currentTime+0.3);
+        }
+      },2200);
+    }else{
+      masterGain.gain.cancelScheduledValues(actx.currentTime);
+      masterGain.gain.linearRampToValueAtTime(1,actx.currentTime+0.2);
+      if(filt)filt.frequency.linearRampToValueAtTime(20000,actx.currentTime+0.2);
+    }
+  }else if(fx==='stut'){
+    if(djFxState.stut){
+      var stutInt=setInterval(function(){
+        if(!djFxState.stut){clearInterval(stutInt);masterGain.gain.value=1;return}
+        masterGain.gain.value=masterGain.gain.value>0.5?0:1;
+      },stepDur()*250);
+    }else{masterGain.gain.value=1}
+  }else if(fx==='half'){
+    if(djFxState.half){tempoMul=0.5;djFxState['2x']=false;
+      var b2=document.querySelector('.dj[data-fx="2x"]');if(b2)b2.classList.remove('on')}
+    else tempoMul=1;
+  }else if(fx==='2x'){
+    if(djFxState['2x']){tempoMul=2;djFxState.half=false;
+      var bh=document.querySelector('.dj[data-fx="half"]');if(bh)bh.classList.remove('on')}
+    else tempoMul=1;
+  }else if(fx==='fltr'){
+    if(filt){
+      if(djFxState.fltr){
+        filt.frequency.cancelScheduledValues(actx.currentTime);
+        filt.frequency.setValueAtTime(20000,actx.currentTime);
+        filt.frequency.exponentialRampToValueAtTime(200,actx.currentTime+1);
+        filt.frequency.exponentialRampToValueAtTime(20000,actx.currentTime+2);
+        setTimeout(function(){djFxState.fltr=false;if(btn)btn.classList.remove('on')},2100);
+      }else{filt.frequency.cancelScheduledValues(actx.currentTime);filt.frequency.value=20000}
+    }
+  }else if(fx==='tape'){
+    if(djFxState.tape){
+      masterGain.gain.exponentialRampToValueAtTime(0.01,actx.currentTime+1.5);
+      if(filt)filt.frequency.exponentialRampToValueAtTime(100,actx.currentTime+1.5);
+      setTimeout(function(){
+        djFxState.tape=false;if(btn)btn.classList.remove('on');
+        masterGain.gain.linearRampToValueAtTime(1,actx.currentTime+0.1);
+        if(filt)filt.frequency.linearRampToValueAtTime(20000,actx.currentTime+0.1);
+      },1600);
+    }
+  }else if(fx==='wash'){
+    if(djFxState.wash){
+      knobDefs.knobREV.val=1;updateKnobUI('knobREV');
+      setTimeout(function(){
+        knobDefs.knobREV.val=0.3;updateKnobUI('knobREV');
+        djFxState.wash=false;if(btn)btn.classList.remove('on');
+      },3000);
+    }
+  }
+  msg.textContent='fx: '+fx+(djFxState[fx]?' on':' off');
+}
+
+// === TAP TEMPO ===
+var tapTimes=[];
+function tapTempo(){
+  var now=Date.now();
+  tapTimes.push(now);
+  // Keep last 5 taps
+  if(tapTimes.length>5)tapTimes.shift();
+  if(tapTimes.length>=3){
+    var intervals=[];
+    for(var i=1;i<tapTimes.length;i++)intervals.push(tapTimes[i]-tapTimes[i-1]);
+    // Discard if gap > 2s
+    if(intervals[intervals.length-1]>2000){tapTimes=[now];return}
+    var avg=0;intervals.forEach(function(v){avg+=v});avg/=intervals.length;
+    var bpm=Math.round(60000/avg);
+    bpm=Math.max(40,Math.min(200,bpm));
+    knobDefs.knobBPM.val=bpm;updateKnobUI('knobBPM');
+    msg.textContent='tempo: '+bpm+' BPM';
+  }
+}
+
+// === UNDO / REDO ===
+var undoStack=[],redoStack=[];
+function saveGridState(){
+  var state=[];
+  for(var r=0;r<ROWS;r++){state[r]=[];for(var c=0;c<STEPS;c++)state[r][c]=grid[r]?grid[r][c]:false}
+  undoStack.push(state);
+  if(undoStack.length>30)undoStack.shift();
+  redoStack=[];
+}
+function restoreGrid(state){
+  for(var r=0;r<ROWS;r++)for(var c=0;c<STEPS;c++){
+    if(grid[r])grid[r][c]=state[r][c];
+    if(stEls[r]&&stEls[r][c]){
+      stEls[r][c].classList.remove('on','oct0','oct1','oct2');
+      if(state[r][c]){stEls[r][c].classList.add('on','oct'+((state[r][c]||1)-1));}
+    }
+  }
+}
+function undo(){
+  if(undoStack.length===0){msg.textContent='nothing to undo';return}
+  // Save current for redo
+  var cur=[];for(var r=0;r<ROWS;r++){cur[r]=[];for(var c=0;c<STEPS;c++)cur[r][c]=grid[r]?grid[r][c]:false}
+  redoStack.push(cur);
+  restoreGrid(undoStack.pop());
+  msg.textContent='undo';
+}
+function redo(){
+  if(redoStack.length===0){msg.textContent='nothing to redo';return}
+  var cur=[];for(var r=0;r<ROWS;r++){cur[r]=[];for(var c=0;c<STEPS;c++)cur[r][c]=grid[r]?grid[r][c]:false}
+  undoStack.push(cur);
+  restoreGrid(redoStack.pop());
+  msg.textContent='redo';
+}
+
+// === TALA OVERLAY ===
+var curTala='none';
+var TALAS={
+  'none':[],
+  'adi':[0,4,8,10,12,14],       // 4+2+2 = chatusra jathi triputa
+  'rupaka':[0,2,6,10,14],       // 2+4
+  'misra':[0,3,5,7,10,12,14]    // 3+2+2
+};
+function applyTala(tala){
+  curTala=tala;
+  var accents=TALAS[tala]||[];
+  for(var r=0;r<ROWS;r++){
+    if(!stEls[r])continue;
+    for(var c=0;c<STEPS;c++){
+      if(!stEls[r][c])continue;
+      stEls[r][c].classList.remove('tala-accent','tala-beat');
+      if(accents.length>0){
+        if(accents.indexOf(c)>=0)stEls[r][c].classList.add('tala-accent');
+      }
+    }
+  }
+  msg.textContent=tala==='none'?'tala off':'tala: '+tala;
+}
+
+// === AUTO-ACCOMPANIMENT ===
+var autoAccompOn=false;
+function toggleAutoAccomp(){
+  autoAccompOn=!autoAccompOn;
+  var btn=document.getElementById('bAuto');
+  btn.classList.toggle('on',autoAccompOn);
+  if(autoAccompOn){
+    if(!actx)initAudio();
+    saveGridState();
+    // Generate bass/drum pattern based on raga
+    var raga=ragas[curRaga];
+    // Sa on beats 0,8 in bass row (if sound pad 0 is kick-like)
+    var bassRow=RAGA_ROWS; // first sound pad row
+    var hatRow=RAGA_ROWS+2; // hat row
+    // Add Sa drone hits
+    [0,4,8,12].forEach(function(c){setCell(0,c,0)});
+    // Add Pa hits
+    [4,12].forEach(function(c){if(raga.svaras[4])setCell(4,c,0)});
+    // Kick on 0,8
+    [0,8].forEach(function(c){setCell(bassRow,c)});
+    // Hat on every other
+    for(var c=0;c<STEPS;c+=2)setCell(hatRow,c);
+    // Random melodic note from raga
+    var avail=[];for(var i=1;i<7;i++)if(raga.svaras[i])avail.push(i);
+    if(avail.length>0){
+      [2,6,10,14].forEach(function(c){
+        var si=avail[Math.floor(Math.random()*avail.length)];
+        setCell(si,c,rndOct());
+      });
+    }
+    msg.textContent='auto-accomp on';
+    if(!playing)startPlay();
+  }else{
+    undo();
+    msg.textContent='auto-accomp off';
+  }
+}
+
+// === HAPTIC ===
+function haptic(ms){if(navigator.vibrate)navigator.vibrate(ms||8)}
+
+// === SONIC WATERMARK ===
+function addSonicWatermark(){
+  if(!actx)return;
+  var svaras=[0,1,2,3];var dur=0.12;
+  var now=actx.currentTime;
+  svaras.forEach(function(s,i){
+    var osc=actx.createOscillator();var g=actx.createGain();
+    osc.setPeriodicWave(getWave(getSvaraFreq(s,1)));
+    osc.frequency.value=getSvaraFreq(s,1);
+    g.gain.setValueAtTime(0.001,now+i*dur);
+    g.gain.linearRampToValueAtTime(0.15,now+i*dur+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,now+i*dur+dur);
+    osc.connect(g);g.connect(masterGain);
+    osc.start(now+i*dur);osc.stop(now+i*dur+dur+0.05);
+  });
+}
+
+// === SIGNATURE ===
+var sigClicks=0;
+function handleSig(){
+  sigClicks++;
+  var zap=document.getElementById('sigZap');
+  var txt=document.getElementById('sigText');
+  if(sigClicks===1){
+    zap.classList.add('lit');txt.classList.add('show');
+  }else if(sigClicks>=2){
+    window.open('https://github.com/swrpr','_blank');
+    sigClicks=0;
+    setTimeout(function(){zap.classList.remove('lit');txt.classList.remove('show')},500);
+  }
+}
+
+// === COLOR ACCENT ===
+var PALETTE=[
+  {c:'#c8a050',n:'gold'},
+  {c:'#b76e79',n:'rose'},
+  {c:'#7b8fa1',n:'steel'},
+  {c:'#2a9d8f',n:'teal'},
+  {c:'#6c7ea0',n:'sapphire'},
+  {c:'#9b72aa',n:'amethyst'},
+  {c:'#b87333',n:'copper'},
+  {c:'#5b9e8f',n:'jade'},
+  {c:'#cc6666',n:'coral'},
+  {c:'#5588bb',n:'arctic'}
+];
+function setAccent(c){
+  document.documentElement.style.setProperty('--acc',c);
+  document.documentElement.style.setProperty('--hi',c);
+  document.documentElement.style.setProperty('--gl',c+'33');
+  localStorage.setItem('rgmpd_accent',c);
+  var m=document.getElementById('cpMain');if(m)m.style.background=c;
+  document.querySelectorAll('.cp-tray .cp').forEach(function(el){el.classList.toggle('on',el.getAttribute('data-c')===c)});
+  var tray=document.getElementById('cpTray');if(tray)tray.classList.remove('open');
+}
+function buildColorPick(){
+  var tray=document.getElementById('cpTray');if(!tray)return;
+  var main=document.getElementById('cpMain');
+  main.addEventListener('click',function(e){e.stopPropagation();tray.classList.toggle('open')});
+  document.addEventListener('click',function(){tray.classList.remove('open')});
+  tray.addEventListener('click',function(e){e.stopPropagation()});
+  PALETTE.forEach(function(p){
+    var d=document.createElement('div');d.className='cp';d.setAttribute('data-c',p.c);
+    d.style.background='linear-gradient(135deg,'+p.c+','+p.c+'88)';
+    d.addEventListener('click',function(){setAccent(p.c)});
+    tray.appendChild(d);
+  });
+  var saved=localStorage.getItem('rgmpd_accent');
+  if(saved)setAccent(saved);
+  else{main.style.background=PALETTE[0].c;tray.querySelector('.cp').classList.add('on')}
+}
+
+
+// === UI ===
+function selectRaga(name){
+  curRaga=name;
+  var raga=ragas[name];
+  document.getElementById('arohaDisp').textContent=raga.aroha;
+  buildPads();
+  for(var r=0;r<RAGA_ROWS;r++){
+    if(stEls[r]){
+      for(var c=0;c<STEPS;c++){
+        if(stEls[r][c]){
+          stEls[r][c].style.opacity=raga.svaras[r]?'':'0.15';
+          stEls[r][c].style.pointerEvents=raga.svaras[r]?'':'none';
+        }
+      }
+    }
+  }
+  if(droneOn){stopDrone();startDrone()}
+  phraseHistory=[];
+}
+
+function setOctave(o){
+  curOctave=o;
+  document.querySelectorAll('.oct-btn').forEach(function(b,i){b.classList.toggle('active',i===o)});
+  if(droneOn){stopDrone();startDrone()}
+}
+
+function setSruthi(val){
+  sruthiVal=parseInt(val);
+  if(droneOn){stopDrone();startDrone()}
+}
+
+// === INIT AUDIO ===
+function initAudio(){
+  if(actx)return;
+  actx=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=actx.createGain();
+  masterGain.gain.value=1;
+  compressor=actx.createDynamicsCompressor();
+  compressor.threshold.value=-20;compressor.knee.value=10;
+  compressor.ratio.value=4;compressor.attack.value=0.003;compressor.release.value=0.25;
+  analyser=actx.createAnalyser();
+  analyser.fftSize=2048;
+  filt=actx.createBiquadFilter();
+  filt.type='lowpass';filt.frequency.value=20000;filt.Q.value=0.7;
+  compressor.connect(filt);
+  filt.connect(analyser);
+  analyser.connect(masterGain);
+  masterGain.connect(actx.destination);
+  createWaves();
+  genReverbIR();
+  initGmkData();
+  initDjFx();
+  initSndPads();
+  buildSndPads();
+  setupSndPadGestures();
+}
+
+// === BOOT ===
+window.addEventListener('DOMContentLoaded',function(){
+  msg=document.getElementById('msg');
+  led=document.getElementById('led');
+
+  setupKnobs();
+  buildPads();
+  buildSeq();
+  refreshSeqColors();
+  selectRaga('kalyani');
+
+  // Viz
+  var canvas=document.getElementById('vizCanvas');
+  canvas.width=canvas.offsetWidth*2;canvas.height=canvas.offsetHeight*2;
+  vizW=canvas.width;vizH=canvas.height;
+  vizCtx=canvas.getContext('2d');
+  drawViz();
+
+  // Viz mode tabs
+  document.querySelectorAll('.vm').forEach(function(vm){
+    vm.addEventListener('click',function(){
+      document.querySelectorAll('.vm').forEach(function(q){q.classList.remove('on')});
+      vm.classList.add('on');
+      vizMode=vm.getAttribute('data-viz');
+      particles=[];
+    });
+  });
+
+  // Viz double-tap to cycle
+  var vizLastTap=0;
+  canvas.addEventListener('pointerdown',function(){
+    var now=Date.now();
+    if(now-vizLastTap<350){
+      var modes=['radial','bars','scope','lissajous','particles','mirror'];
+      var idx=(modes.indexOf(vizMode)+1)%modes.length;
+      vizMode=modes[idx];particles=[];
+      document.querySelectorAll('.vm').forEach(function(q){q.classList.toggle('on',q.getAttribute('data-viz')===vizMode)});
+      msg.textContent='viz: '+vizMode;
+    }
+    vizLastTap=now;
+  });
+
+  // Transport
+  document.getElementById('bPlay').addEventListener('click',startPlay);
+  document.getElementById('bStop').addEventListener('click',stopPlay);
+  document.getElementById('bClear').addEventListener('click',clearSeq);
+  document.getElementById('bRec').addEventListener('click',toggleRec);
+
+  // Pad menu
+  document.getElementById('modalOverlay').addEventListener('click',function(){hidePadMenu();hideSoundBrowser()});
+  document.querySelectorAll('.pm-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var act=btn.getAttribute('data-act');
+      hidePadMenu();
+      if(act==='browse')showSoundBrowser(contextTarget);
+      else if(act==='record')startPadRecording(contextTarget);
+      else if(act==='remove')removePadSound(contextTarget);
+    });
+  });
+
+  // Sound browser
+  document.getElementById('sbClose').addEventListener('click',hideSoundBrowser);
+  document.querySelectorAll('.sb-cat').forEach(function(cat){
+    cat.addEventListener('click',function(){
+      document.querySelectorAll('.sb-cat').forEach(function(c){c.classList.remove('on')});
+      cat.classList.add('on');sbCat=cat.getAttribute('data-cat');renderSounds();
+    });
+  });
+
+  // Presets
+  var prEl=document.getElementById('presets');
+  Object.keys(PR).forEach(function(name){
+    var b=document.createElement('div');b.className='pre';b.textContent=name;
+    b.addEventListener('click',function(){
+      if(!actx)initAudio();
+      saveGridState();
+      for(var r=0;r<ROWS;r++)if(grid[r])for(var c=0;c<STEPS;c++)clearCell(r,c);
+      if(name==='dice'){
+        for(var r=0;r<ROWS;r++)if(grid[r])for(var c=0;c<STEPS;c++)
+          if(Math.random()<.12)setCell(r,c,rndOct());
+      }else{
+        PR[name].forEach(function(p){if(grid[p[0]])p[1].forEach(function(c){
+          setCell(p[0],c,p[2]!==undefined?p[2]:0)})});
+      }
+      document.querySelectorAll('.pre').forEach(function(q){q.classList.remove('on')});
+      b.classList.add('on');
+    });
+    prEl.appendChild(b);
+  });
+
+  // Pattern generators
+  var modesEl=document.getElementById('modes');
+  Object.keys(MODES).forEach(function(name){
+    var b=document.createElement('div');b.className='mode';b.textContent=name;
+    b.addEventListener('click',function(){
+      if(!actx)initAudio();
+      saveGridState();
+      if(name!=='shuffle')for(var r=0;r<ROWS;r++)if(grid[r])for(var c=0;c<STEPS;c++)clearCell(r,c);
+      MODES[name]();
+      document.querySelectorAll('.mode,.pre').forEach(function(q){q.classList.remove('on')});
+      b.classList.add('on');
+    });
+    modesEl.appendChild(b);
+  });
+
+  // Sound pads placeholder (will be built on first audio init)
+  var grid2=document.getElementById('sndPadGrid');
+  for(var i=0;i<SND_PAD_COUNT;i++){
+    var ds=defaultSounds[i];
+    var pad=document.createElement('div');
+    pad.className='pad';
+    pad.style.setProperty('--c',ds.col);
+    var label=ds.type==='empty'?'+':ds.name;
+    var sub=ds.type==='empty'?'add sound':ds.type;
+    pad.innerHTML='<div class="gl"></div><div class="nm">'+label+'</div><div class="nm2">'+sub+'</div>';
+    pad.addEventListener('pointerdown',function(){if(!actx)initAudio()});
+    grid2.appendChild(pad);
+  }
+
+  // Song record
+  document.getElementById('bSongRec').addEventListener('click',startSongRec);
+
+  // DJ effect buttons
+  document.querySelectorAll('.dj').forEach(function(btn){
+    btn.addEventListener('click',function(){toggleDjFx(btn.getAttribute('data-fx'))});
+  });
+
+  // Share overlay
+  document.getElementById('sharePlay').addEventListener('click',sharePlayPreview);
+  document.getElementById('shareAll').addEventListener('click',shareAll);
+  document.getElementById('shareClose').addEventListener('click',hideShareOverlay);
+
+  // Signature
+  document.getElementById('sigBlock').addEventListener('click',handleSig);
+
+  // Try-it demo
+
+  // Ticker tape init
+  updateTicker('all');
+
+  // Mood filter
+  document.querySelectorAll('.mood').forEach(function(m){
+    m.addEventListener('click',function(){
+      document.querySelectorAll('.mood').forEach(function(q){q.classList.remove('on')});
+      m.classList.add('on');
+      filterRagasByMood(m.getAttribute('data-mood'));
+    });
+  });
+
+  // Tala overlay
+  document.querySelectorAll('.tb').forEach(function(t){
+    t.addEventListener('click',function(){
+      document.querySelectorAll('.tb').forEach(function(q){q.classList.remove('on')});
+      t.classList.add('on');
+      applyTala(t.getAttribute('data-tala'));
+    });
+  });
+
+  // Undo/Redo
+  document.getElementById('bUndo').addEventListener('click',undo);
+  document.getElementById('bRedo').addEventListener('click',redo);
+
+  // Auto-accompaniment
+  document.getElementById('bAuto').addEventListener('click',toggleAutoAccomp);
+
+  // Tap tempo
+  document.getElementById('kvBPM').addEventListener('click',tapTempo);
+
+  // Setup raga pad gestures
+  setupPadGestures();
+  buildColorPick();
+
+  // Check for baked-in jam state or URL hash
+  var jamData=window.__JAM_STATE__||null;
+  if(!jamData){var hash=window.location.hash;if(hash&&hash.indexOf('#jam=')===0)jamData=hash.slice(5);}
+  if(jamData){
+    setTimeout(function(){
+      if(!actx)initAudio();
+      decodeJam(jamData);
+      startPlay();
+    },500);
+  }
+
+  // Logo letters play svaras
+  document.querySelectorAll('.logo-l').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      if(!actx)initAudio();
+      var si=parseInt(el.getAttribute('data-si'));
+      playNote(si,0,0.8,0.2);
+      el.classList.add('pop');
+      setTimeout(function(){el.classList.remove('pop')},200);
+    });
+  });
+
+  // Resize
+  window.addEventListener('resize',function(){
+    canvas.width=canvas.offsetWidth*2;canvas.height=canvas.offsetHeight*2;
+    vizW=canvas.width;vizH=canvas.height;
+  });
+});
+
+</script>
+</body>
+</html>
